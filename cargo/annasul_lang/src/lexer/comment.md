@@ -1,4 +1,0 @@
-|           line_type\comment_type            |          [`Inner`](CommentType::Inner)           |          [`Outer`](CommentType::Outer)           | [`Line`](CommentType::Line) |
-|:-------------------------------------------:|:------------------------------------------------:|:------------------------------------------------:|-----------------------------|
-| [`SingleLine`](CommentLineType::SingleLine) |  `/// Single-line Inner Documentation Comments`  |  `//! Single-line Outer Documentation Comments`  | `// Single-line Comments`   |
-|  [`MultiLine`](CommentLineType::MultiLine)  | `/** Multi-line Inner Documentation Comments */` | `/*! Multi-line Outer Documentation Comments */` | `/* Multi-line Comments */` |
