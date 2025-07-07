@@ -1,16 +1,3 @@
-// Copyright (c) 2025 air (https://yuanair.github.io).
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, version 3 of the License only.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>. # commands:
-
 use std::{
     borrow::Cow,
     ffi::OsString,
@@ -185,12 +172,9 @@ impl ShellOptions {
     }
 
     pub fn config_file_name(&self) -> Cow<'static, Path, > {
-        let app_name = crate::app_name();
+        let app_name = crate::NAME;
         match self.shell {
-            Shell::Bash => match app_name {
-                Cow::Borrowed(app_name, ) => Cow::Borrowed(Path::new(app_name)),
-                Cow::Owned(app_name, ) => Cow::Owned(PathBuf::from(app_name)),
-            },
+            Shell::Bash => Cow::Borrowed(Path::new(app_name)),
             Shell::Zsh => Cow::Owned(format!("_{app_name}").into()),
             Shell::Fish => Cow::Owned(format!("{app_name}.fish").into()),
             Shell::PowerShell => Cow::Owned(format!("{app_name}.ps1").into()),
@@ -243,7 +227,7 @@ impl SubCommand {
                 let mut buffer = Vec::new();
                 match sub_command {
                     AutoCompleteSubCommand::Output { shell, } => {
-                        generate_completion(shell.shell, &crate::app_name(), &mut buffer);
+                        generate_completion(shell.shell, &crate::NAME, &mut buffer);
                         io::stdout().write_all(&buffer).map_err(Error::IOError)?;
                         Ok(())
                     }
@@ -269,7 +253,7 @@ impl SubCommand {
                                     res => res,
                                 }
                                     .map_err(Error::IOError)?;
-                            generate_completion(shell.shell, &crate::app_name(), &mut config_file);
+                            generate_completion(shell.shell, &crate::NAME, &mut config_file);
                         }
                         println!(
                             "the auto-completion script for {} was installed {}.",
@@ -293,7 +277,7 @@ impl SubCommand {
                                     .map_err(Error::IOError)?;
                                 generate_completion(
                                     shell.shell,
-                                    &crate::app_name(),
+                                    &crate::NAME,
                                     &mut config_file,
                                 );
                             }

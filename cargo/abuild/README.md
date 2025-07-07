@@ -43,24 +43,24 @@ use ::abuild::{project::Project, profile::Profiles, target::Targets};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Project::default().parse_args().run()?;
     Project::builder()
-    	.src_dir("./src")
-    	.rc_dir("./rc")
-    	.profiles(
+        .src_dir("./src")
+        .rc_dir("./rc")
+        .profiles(
             // Profiles::default()?
             Profiles::builder()
-            	.dev("debug")
-            	.release("release")
-            	.build()?
-    	)
-    	.targets(
+                .dev("debug")
+                .release("release")
+                .build()?
+        )
+        .targets(
             // Targets::host()?
             Targets::builder()
-            	.host()
-			.build()?
-    	)
-    	.build()?
-    	.parse_args()
-    	.run()?;
+                .host()
+                .build()?
+        )
+        .build()?
+        .parse_args()
+        .run()?;
     Ok(())
 }
 ```
@@ -73,18 +73,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 use ::abuild::{workspace::Workspace, project::Projects};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Workspace::default().parse_args().run()?;
-	Workspace::builder()
-		.projects(
+    Workspace::builder()
+        .projects(
             // Projects::default()?
             Projects::with_dirs([
-                "./project_a", 
+                "./project_a",
                 "./project_b"
             ])
-            .build()?
-    	)
-		.build()?
-		.parse_args()
-		.run()?;
+                .build()?
+        )
+        .build()?
+        .parse_args()
+        .run()?;
     Ok(())
 }
 ```
@@ -99,16 +99,16 @@ mod project_a;
 mod project_b;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Workspace::with_projects([project_a::project()?, project_b::project()?]).parse_args().run()?;
-	Workspace::builder()
-		.projects(
+    Workspace::builder()
+        .projects(
             Projects::from_slice([
                 project_a::project()?,
                 project_b::project()?,
             ])
-    	)
-		.build()?
-		.parse_args()
-		.run()?;
+        )
+        .build()?
+        .parse_args()
+        .run()?;
     Ok(())
 }
 ```
@@ -128,7 +128,6 @@ fn targets() -> Result<Targets, Box<dyn std::error::Error>> {
 }
 ```
 
-
 ### Profiles
 
 ```rust
@@ -140,10 +139,10 @@ fn profiles() -> Result<Profiles, Box<dyn std::error::Error>> {
         Profiles::builder()
             .dev("debug")
             .release("release")
-        	.target_dir("./target")
-        	.build_dir("build") // ./target/build
-        	.deps_dir("deps") // ./target/deps
-        	.bin_dir("bin") // ./target/bin
+            .target_dir("./target")
+            .build_dir("build") // ./target/build
+            .deps_dir("deps") // ./target/deps
+            .bin_dir("bin") // ./target/bin
             .build()?
     )
 }

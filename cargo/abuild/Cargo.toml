@@ -9,6 +9,7 @@ license.workspace = true
 edition.workspace = true
 description.workspace = true
 documentation.workspace = true
+readme = "README.md"
 
 [lib]
 name = "abuild"

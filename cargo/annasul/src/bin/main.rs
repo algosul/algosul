@@ -1,16 +1,4 @@
 #![feature(lock_value_accessors)]
-// Copyright (c) 2025 air (https://yuanair.github.io).
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, version 3 of the License only.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
 use std::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -19,9 +7,15 @@ use std::{
 
 use annasul::app::{
     AppOper,
-    apps::rust::{HostTriple, InstallCustomInfo, InstallInfo, Profile, Rustup, Toolchain},
+    apps::rust::{
+        HostTriple,
+        InstallCustomInfo,
+        InstallInfo,
+        Profile,
+        Rustup,
+        Toolchain,
+    },
 };
-use glib::SignalHandlerId;
 use gtk4::{
     Application,
     ApplicationWindow,
@@ -39,11 +33,7 @@ use gtk4::{
     glib::ExitCode,
     prelude::*,
 };
-use tokio::{
-    join,
-    runtime::Runtime,
-    sync::Mutex,
-};
+use tokio::{join, runtime::Runtime, sync::Mutex};
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 struct DronDownBuilder<'a, T> {
     all: &'a [T],
@@ -96,7 +86,9 @@ fn build_combo<T: Default + Debug + Display + FromStr + 'static>(
     });
     combo
 }
-fn build_dropdown<T: Default + Debug + Display + FromStr + PartialEq + Eq + 'static>(
+fn build_dropdown<
+    T: Default + Debug + Display + FromStr + PartialEq + Eq + 'static,
+>(
     all: &[T], f: fn(&T),
 ) -> DropDown
 where <T as FromStr>::Err: Debug {
@@ -121,17 +113,23 @@ where T: Default + Debug + PartialEq + FromStr + Eq + Display + 'static + Clone
     type Output = Notebook;
 
     fn build(self, info: Self::Info) -> Result<Self::Output, Self::Error> {
-        let model = self.all.iter().map(|x| x.to_string()).collect::<Vec<String>>();
+        let model =
+            self.all.iter().map(|x| x.to_string()).collect::<Vec<String>>();
         let notebook = Notebook::builder().build();
         for i in model {
-            notebook.append_page(&Label::new(Some(&i)), Some(&Label::new(Some(&i))));
+            notebook.append_page(
+                &Label::new(Some(&i)),
+                Some(&Label::new(Some(&i))),
+            );
         }
         notebook.set_current_page(Some(
-            self.all.iter().position(|t| t == &T::default()).unwrap() as u32
+            self.all.iter().position(|t| t == &T::default()).unwrap() as u32,
         ));
         let f = self.f;
         let all = self.all.to_vec();
-        notebook.connect_change_current_page(move |_notebook: &Notebook, i| f(&all[i as usize]));
+        notebook.connect_change_current_page(move |_notebook: &Notebook, i| {
+            f(&all[i as usize])
+        });
         Ok(notebook)
     }
 }
@@ -139,14 +137,17 @@ static DEFAULT_HOST_TRIPLE: LazyLock<Mutex<HostTriple>> =
     LazyLock::new(|| Mutex::new(Default::default()));
 static DEFAULT_TOOLCHAIN: LazyLock<Mutex<Toolchain>> =
     LazyLock::new(|| Mutex::new(Default::default()));
-static PROFILE: LazyLock<Mutex<Profile>> = LazyLock::new(|| Mutex::new(Default::default()));
-static MODIFY_PATH_VARIABLE: LazyLock<Mutex<bool>> =
-    LazyLock::new(|| Mutex::new(InstallCustomInfo::default().modify_path_variable));
+static PROFILE: LazyLock<Mutex<Profile>> =
+    LazyLock::new(|| Mutex::new(Default::default()));
+static MODIFY_PATH_VARIABLE: LazyLock<Mutex<bool>> = LazyLock::new(|| {
+    Mutex::new(InstallCustomInfo::default().modify_path_variable)
+});
 static INSTALL_THREAD: std::sync::Mutex<Option<tokio::task::JoinHandle<()>>> =
     std::sync::Mutex::new(None);
 fn main() -> ExitCode {
     env_logger::init();
-    let app = Application::builder().application_id("yuanair.github.io").build();
+    let app =
+        Application::builder().application_id("yuanair.github.io").build();
     app.connect_activate(|app| {
         let window = ApplicationWindow::builder()
             .application(app)
@@ -162,7 +163,9 @@ fn main() -> ExitCode {
             vbox.append(&build_dropdown(
                 &[Profile::Minimal, Profile::Default, Profile::Complete],
                 |profile| {
-                    *Runtime::new().unwrap().block_on(async { PROFILE.lock().await }) = *profile;
+                    *Runtime::new()
+                        .unwrap()
+                        .block_on(async { PROFILE.lock().await }) = *profile;
                     println!("profile: {profile}");
                 },
             ));
@@ -174,32 +177,40 @@ fn main() -> ExitCode {
                     Toolchain::None,
                 ],
                 |toolchain| {
-                    *Runtime::new().unwrap().block_on(async { DEFAULT_TOOLCHAIN.lock().await }) =
+                    *Runtime::new()
+                        .unwrap()
+                        .block_on(async { DEFAULT_TOOLCHAIN.lock().await }) =
                         *toolchain;
                     println!("toolchain: {toolchain}");
                 },
             ));
             vbox.append(
                 &NotebookBuilder::new()
-                    .all(&[HostTriple::Host, HostTriple::Target("".to_string())])
+                    .all(&[
+                        HostTriple::Host,
+                        HostTriple::Target("".to_string()),
+                    ])
                     .on_change(|host_triple| {
-                        *Runtime::new()
-                            .unwrap()
-                            .block_on(async { DEFAULT_HOST_TRIPLE.lock().await }) =
-                            host_triple.clone();
+                        *Runtime::new().unwrap().block_on(async {
+                            DEFAULT_HOST_TRIPLE.lock().await
+                        }) = host_triple.clone();
                         println!("host_triple: {host_triple}");
                         true
                     })
                     .build(())
                     .unwrap(),
             );
-            let user_input_args =
-                Entry::builder().placeholder_text("args e.g. `-h`").margin_top(20).build();
+            let user_input_args = Entry::builder()
+                .placeholder_text("args e.g. `-h`")
+                .margin_top(20)
+                .build();
             vbox.append(&user_input_args);
             let button = Button::with_label("Install");
             vbox.append(&button);
             button.connect_clicked(move |button| {
-                if let Some(ref install_thread) = *INSTALL_THREAD.lock().unwrap() {
+                if let Some(ref install_thread) =
+                    *INSTALL_THREAD.lock().unwrap()
+                {
                     if install_thread.is_finished() {
                         button.set_label("Installed（已安装）");
                     } else {
@@ -208,12 +219,21 @@ fn main() -> ExitCode {
                 }
                 INSTALL_THREAD
                     .replace(Some(Runtime::new().unwrap().spawn(async move {
-                        Rustup::install(InstallInfo::Custom(InstallCustomInfo {
-                            default_host_triple:  (*DEFAULT_HOST_TRIPLE.lock().await).clone(),
-                            default_toolchain:    *DEFAULT_TOOLCHAIN.lock().await,
-                            profile:              *PROFILE.lock().await,
-                            modify_path_variable: *MODIFY_PATH_VARIABLE.lock().await,
-                        }))
+                        Rustup::install(InstallInfo::Custom(
+                            InstallCustomInfo {
+                                default_host_triple:  (*DEFAULT_HOST_TRIPLE
+                                    .lock()
+                                    .await)
+                                    .clone(),
+                                default_toolchain:    *DEFAULT_TOOLCHAIN
+                                    .lock()
+                                    .await,
+                                profile:              *PROFILE.lock().await,
+                                modify_path_variable: *MODIFY_PATH_VARIABLE
+                                    .lock()
+                                    .await,
+                            },
+                        ))
                         .await
                         .unwrap();
                         let dialog = MessageDialog::builder()
@@ -227,7 +247,10 @@ fn main() -> ExitCode {
                     .unwrap();
                 println!("Input {i}: {}", user_input_args.text());
             });
-            notebook.append_page(&vbox, Some(&Label::new(Some(&format!("Preset {i}")))));
+            notebook.append_page(
+                &vbox,
+                Some(&Label::new(Some(&format!("Preset {i}")))),
+            );
         }
     });
     app.connect_shutdown(|_| {
