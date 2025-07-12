@@ -1,17 +1,20 @@
 //! #Example
 //! ```no_run
-//! let rustup = tokio::runtime::Runtime::new()
-//!     .unwrap()
-//!     .block_on(async {
-//!         use annasul::app::{
-//!             AppOper,
-//!             apps::rust::{InstallInfo, Rustup},
-//!         };
-//!         // install rustup
-//!         Rustup::install(InstallInfo::Default).await
-//!     })
-//!     .unwrap();
-//! println!("Hello {rustup:#?}");
+//! #[cfg(feature = "app-apps")]
+//! {
+//!     let rustup = tokio::runtime::Runtime::new()
+//!         .unwrap()
+//!         .block_on(async {
+//!             use annasul::app::{
+//!                 AppOper,
+//!                 apps::rust::{InstallInfo, Rustup},
+//!             };
+//!             // install rustup
+//!             Rustup::install(InstallInfo::Default).await
+//!         })
+//!         .unwrap();
+//!     println!("Hello {rustup:#?}");
+//! }
 //! ```
 
 #![allow(async_fn_in_trait)]
