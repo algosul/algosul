@@ -10,6 +10,7 @@ edition = "2024"
 description = "Some user-friendly yet personalized tools"
 documentation = "https://docs.rs/annasul"
 readme = "README.md"
+build = "build.rs"
 
 [lib]
 name = "annasul"
