@@ -492,13 +492,6 @@ impl crate::app::AppOper for Rustup {
                 })
             }
         }
-        #[cfg(all(not(windows), not(unix)))]
-        {
-            Err(Error::Unsupported(
-                format!("unsupported platform '{}'", std::env::consts::OS)
-                    .into(),
-            ))
-        }
     }
 
     async fn reinstall(self, _info: Self::ReinstallInfo) -> Result<Self> {
