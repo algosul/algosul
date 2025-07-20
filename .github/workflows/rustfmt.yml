@@ -1,0 +1,41 @@
+name: Rust Format Check
+
+on:
+  pull_request:
+    branches: [ release ]
+
+permissions:
+  contents: write
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: true
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+
+      - name: Run cargo fmt
+        run: |
+          cargo fmt --all -- --check
+          if [ $? -ne 0 ]; then
+            cargo fmt --all -- --config-path code-standard/rustfmt.toml
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git add .
+            git commit -m "style: apply cargo fmt [skip ci]"
+            git push
+            echo "Formatted code and pushed changes."
+          else
+            echo "Code is already formatted."
+          fi
