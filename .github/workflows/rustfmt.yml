@@ -42,7 +42,9 @@ jobs:
               git push
               echo "Formatted code and pushed changes."
             else
+              git status
               echo "No formatting changes to commit."
+              exit 1
             fi
           else
             echo "Code is already formatted."
