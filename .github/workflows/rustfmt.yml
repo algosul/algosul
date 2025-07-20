@@ -29,7 +29,7 @@ jobs:
         run: |
           cargo fmt --all -- --check || NEED_FMT=$?
           if [ "${NEED_FMT:-0}" -ne 0 ]; then
-            cargo fmt --all -- --config-path code-standard/rustfmt.toml
+            cargo fmt --all -- --config-path code-standards/rustfmt.toml
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
             git add .
