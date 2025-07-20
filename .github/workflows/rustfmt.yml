@@ -27,15 +27,23 @@ jobs:
 
       - name: Run cargo fmt
         run: |
-          cargo fmt --all -- --check || NEED_FMT=$?
-          if [ "${NEED_FMT:-0}" -ne 0 ]; then
+          # First check if formatting is needed
+          if ! cargo fmt --all -- --check; then
+            # Format the code using custom config
             cargo fmt --all -- --config-path code-standards/rustfmt.toml
+    
+            # Configure git
             git config user.name "GitHub Actions"
             git config user.email "actions@github.com"
+    
+            # Add and commit changes
             git add .
-            git commit -m "style: apply cargo fmt [skip ci]"
-            git push
-            echo "Formatted code and pushed changes."
+            if git commit -m "style: apply cargo fmt [skip ci]"; then
+              git push
+              echo "Formatted code and pushed changes."
+            else
+              echo "No formatting changes to commit."
+            fi
           else
             echo "Code is already formatted."
           fi
