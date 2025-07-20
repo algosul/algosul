@@ -28,7 +28,7 @@ jobs:
       - name: Run cargo fmt
         run: |
           # First check if formatting is needed
-          if ! cargo fmt --all -- --check; then
+          if ! cargo fmt --all -- --check --config-path code-standards/rustfmt.toml; then
             # Format the code using custom config
             cargo fmt --all -- --config-path code-standards/rustfmt.toml
     
