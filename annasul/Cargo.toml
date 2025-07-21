@@ -1,0 +1,56 @@
+[package]
+name = "annasul-rs"
+version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license.workspace = true
+edition.workspace = true
+description.workspace = true
+documentation = "https://docs.rs/annasul"
+readme.workspace = true
+build = "build.rs"
+
+[lib]
+name = "annasul"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "annasul"
+path = "src/bin/main.rs"
+required-features = ["app-apps", "gtk4", "glib"]
+
+[[test]]
+name = "i18n"
+path = "tests/i18n.rs"
+required-features = ["i18n-marco"]
+
+[features]
+default = ["app-apps", "i18n"]
+app = []
+app-apps = ["app", "dep:serde", "dep:tokio", "dep:reqwest"]
+gtk4 = ["dep:gtk4"]
+glib = ["dep:glib"]
+i18n = ["i18n-base"]
+i18n-base = ["dep:serde", "dep:toml", "dep:strfmt", "dep:sys-locale"]
+i18n-marco = ["i18n", "marco"]
+marco = ["dep:annasul-marco"]
+[dependencies]
+annasul-marco = { version = "0.0.1", path = "../annasul-marco", default-features = false, features = [], optional = true }
+tokio = { version = "1.*", features = [
+    "process",
+    "io-util",
+    "rt",
+    "macros",
+    "rt-multi-thread",
+], optional = true }
+serde = { version = "1.*", features = ["derive"], optional = true }
+toml = { version = "0.8.23", features = ["parse", "display"], optional = true }
+log = { version = "0.4", features = ["serde", "kv_serde"] }
+reqwest = { version = "0.11", features = ["blocking"], optional = true }
+env_logger = { version = "0.11" }
+gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
+glib = { version = "0.20", features = [], optional = true }
+strfmt = { version = "*", optional = true }
+sys-locale = { version = "0.3.2", optional = true }

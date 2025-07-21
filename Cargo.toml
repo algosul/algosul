@@ -1,5 +1,7 @@
-[package]
-name = "annasul-rs"
+[workspace]
+resolver = "3"
+members = ["annasul", "annasul-marco"]
+[workspace.package]
 version = "0.0.1"
 authors = ["algosul@github.com"]
 homepage = "https://github.com/algosul/annasul"
@@ -8,42 +10,4 @@ keywords = ["annasul"]
 license = "AGPL-3.0-only"
 edition = "2024"
 description = "Some user-friendly yet personalized tools"
-documentation = "https://docs.rs/annasul"
 readme = "README.md"
-build = "build.rs"
-
-[lib]
-name = "annasul"
-crate-type = ["rlib"]
-
-[[bin]]
-name = "annasul"
-path = "src/bin/main.rs"
-required-features = ["app-apps", "gtk4", "glib"]
-
-[features]
-default = ["app-apps", "i18n"]
-app = []
-app-apps = ["app", "dep:serde", "dep:tokio", "dep:reqwest"]
-gtk4 = ["dep:gtk4"]
-glib = ["dep:glib"]
-i18n = ["i18n-base"]
-i18n-base = ["dep:serde", "dep:toml"]
-marco = ["dep:annasul-marco"]
-[dependencies]
-annasul-marco = { version = "0.0.1", path = "../annasul-marco", default-features = false, features = [], optional = true }
-tokio = { version = "1.*", features = [
-    "process",
-    "io-util",
-    "rt",
-    "macros",
-    "rt-multi-thread",
-], optional = true }
-serde = { version = "1.*", features = ["derive"], optional = true }
-toml = { version = "0.8.23", features = ["parse", "display"], optional = true }
-log = { version = "0.4", features = ["serde", "kv_serde"] }
-reqwest = { version = "0.11", features = ["blocking"], optional = true }
-env_logger = { version = "0.11" }
-gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
-glib = { version = "0.20", features = [], optional = true }
-strfmt = { version = "*" }

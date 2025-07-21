@@ -1,0 +1,3 @@
+[submodule "keep-sorted"]
+	path = keep-sorted
+	url = https://github.com/maksym-arutyunyan/keepsorted.git

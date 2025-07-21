@@ -35,10 +35,7 @@ dependencies = [
  "log",
  "proc-macro2",
  "quote",
- "serde",
- "strfmt",
  "syn",
- "sys-locale",
 ]
 
 [[package]]
@@ -53,6 +50,7 @@ dependencies = [
  "reqwest",
  "serde",
  "strfmt",
+ "sys-locale",
  "tokio",
  "toml",
 ]
