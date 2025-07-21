@@ -20,5 +20,7 @@
 #![allow(async_fn_in_trait)]
 #[cfg(any(doc, feature = "app"))]
 pub mod app;
+#[cfg(any(doc, feature = "i18n-base"))]
+pub mod i18n;
 mod marco;
 mod os_impl;
