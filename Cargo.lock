@@ -27,21 +27,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "algosul-marco"
+name = "algosul"
 version = "0.0.1"
 dependencies = [
- "env_logger",
- "itertools",
- "log",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "algosul-rs"
-version = "0.0.1"
-dependencies = [
+ "algosul-core",
  "algosul-marco",
  "env_logger",
  "glib",
@@ -52,7 +41,31 @@ dependencies = [
  "strfmt",
  "sys-locale",
  "tokio",
+]
+
+[[package]]
+name = "algosul-core"
+version = "0.0.1"
+dependencies = [
+ "serde",
+ "strfmt",
+ "sys-locale",
  "toml",
+]
+
+[[package]]
+name = "algosul-marco"
+version = "0.0.1"
+dependencies = [
+ "algosul-core",
+ "env_logger",
+ "itertools",
+ "log",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "strfmt",
+ "syn",
 ]
 
 [[package]]

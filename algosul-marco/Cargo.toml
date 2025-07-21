@@ -17,9 +17,12 @@ proc-macro = true
 [features]
 
 [dependencies]
+algosul-core = { path = "../algosul-core", default-features = false, features = ["i18n"] }
 env_logger = "0.11.8"
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
 syn = { version = "2.0.104", features = ["full"] }
 log = "0.4.27"
 itertools = { version = "0.14.0" }
+serde = { version = "1.*", features = ["derive"] }
+strfmt = { version = "*" }

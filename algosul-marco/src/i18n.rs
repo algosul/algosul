@@ -187,7 +187,7 @@ pub(crate) fn parse_named_struct(
                     .map(|x| x.as_ref())
                     .collect::<HashSet<_>>()
                     != required_keys {
-                    return Err(::algosul::i18n::Error::FormatParameterMismatch(
+                    return Err(::algosul_core::i18n::Error::FormatParameterMismatch(
                         ::std::format!(#error_fmt, #name_str, #must_use_str, keys)
                     ));
                 }
@@ -205,7 +205,7 @@ pub(crate) fn parse_named_struct(
     }
     error.map(|()| {
         quote_spanned! {span =>
-            impl ::algosul::i18n::I18n for #name {
+            impl ::algosul_core::i18n::I18n for #name {
                 type DataType = #data_name;
                 fn to_data(&self) -> Self::DataType {
                     Self::DataType {
@@ -228,9 +228,9 @@ pub(crate) fn parse_named_struct(
             #vis struct #data_name {
                 #data_fields_tokens
             }
-            impl ::algosul::i18n::I18nData for #data_name {
+            impl ::algosul_core::i18n::I18nData for #data_name {
                 type I18n = #name;
-                fn check(&self) -> ::algosul::i18n::Result<()> {
+                fn check(&self) -> ::algosul_core::i18n::Result<()> {
                     use ::std::collections::HashSet;
                     fn keys(fmt: &str) -> ::strfmt::Result<HashSet<String>> {
                         let mut buffer = HashSet::new();
@@ -246,6 +246,7 @@ pub(crate) fn parse_named_struct(
             }
             impl ::core::convert::Into<#data_name> for #name {
                 fn into(self) -> #data_name {
+                    use ::algosul_core::i18n::I18n;
                     self.into_data()
                 }
             }
@@ -266,7 +267,7 @@ pub(crate) fn parse_unnamed_struct(
     let data_name = data_name!(name);
     error.map(|()| {
         quote_spanned! {span =>
-            impl ::algosul::i18n::I18n for #name {
+            impl ::algosul_core::i18n::I18n for #name {
                 type DataType = #data_name;
                 fn to_data(&self) -> Self::DataType {
                     todo!()
@@ -287,11 +288,12 @@ pub(crate) fn parse_unnamed_struct(
                     #fields
                 ),*
             }
-            impl ::algosul::i18n::I18nData for #data_name {
+            impl ::algosul_core::i18n::I18nData for #data_name {
                 type I18n = #name;
             }
             impl ::core::convert::Into<#data_name> for #name {
                 fn into(self) -> #data_name {
+                    use ::algosul_core::i18n::I18n;
                     self.into_data()
                 }
             }
@@ -306,7 +308,7 @@ pub(crate) fn parse_unit_struct(
     trace!("}}");
     let data_name = data_name!(name);
     Ok(quote_spanned! {span =>
-        impl ::algosul::i18n::I18n for #name {
+        impl ::algosul_core::i18n::I18n for #name {
             type DataType = #data_name;
             fn to_data(&self) -> Self::DataType {
                 todo!()
@@ -323,11 +325,12 @@ pub(crate) fn parse_unit_struct(
             ::serde::Deserialize
         )]
         #vis struct #data_name;
-        impl ::algosul::i18n::I18nData for #data_name {
+        impl ::algosul_core::i18n::I18nData for #data_name {
             type I18n = #name;
         }
         impl ::core::convert::Into<#data_name> for #name {
             fn into(self) -> #data_name {
+                use ::algosul_core::i18n::I18n;
                 self.into_data()
             }
         }
