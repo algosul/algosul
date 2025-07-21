@@ -12,3 +12,7 @@ Any derivative work must be **open source** under the same license.
 ## Introduction
 
 Some user-friendly yet personalized tools
+
+## Dependencies
+
++ [annasul-marco](https://github.com/algosul/annasul-marco)
