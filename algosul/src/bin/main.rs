@@ -6,6 +6,7 @@ use std::{
 };
 
 use algosul::app::{
+    AppOper,
     apps::rust::{
         HostTriple,
         InstallCustomInfo,
@@ -14,11 +15,8 @@ use algosul::app::{
         Rustup,
         Toolchain,
     },
-    AppOper,
 };
 use gtk4::{
-    glib::ExitCode,
-    prelude::*,
     Application,
     ApplicationWindow,
     Box,
@@ -32,6 +30,8 @@ use gtk4::{
     Orientation,
     StringList,
     StringObject,
+    glib::ExitCode,
+    prelude::*,
 };
 use tokio::{join, runtime::Runtime, sync::Mutex};
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
