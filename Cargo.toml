@@ -1,5 +1,5 @@
 [package]
-name = "annasul"
+name = "annasul-rs"
 version = "0.0.1"
 authors = ["algosul@github.com"]
 homepage = "https://github.com/algosul/annasul"

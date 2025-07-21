@@ -27,22 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "annasul"
-version = "0.0.1"
-dependencies = [
- "annasul-marco",
- "env_logger",
- "glib",
- "gtk4",
- "log",
- "reqwest",
- "serde",
- "strfmt",
- "tokio",
- "toml",
-]
-
-[[package]]
 name = "annasul-marco"
 version = "0.0.1"
 dependencies = [
@@ -55,6 +39,22 @@ dependencies = [
  "strfmt",
  "syn",
  "sys-locale",
+]
+
+[[package]]
+name = "annasul-rs"
+version = "0.0.1"
+dependencies = [
+ "annasul-marco",
+ "env_logger",
+ "glib",
+ "gtk4",
+ "log",
+ "reqwest",
+ "serde",
+ "strfmt",
+ "tokio",
+ "toml",
 ]
 
 [[package]]
