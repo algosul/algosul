@@ -1,5 +1,5 @@
 [package]
-name = "annasul-marco"
+name = "algosul-marco"
 version.workspace = true
 authors.workspace = true
 homepage.workspace = true
@@ -8,7 +8,6 @@ keywords.workspace = true
 license.workspace = true
 edition.workspace = true
 description.workspace = true
-documentation = "https://docs.rs/annasul-marco"
 readme.workspace = true
 build = "build.rs"
 

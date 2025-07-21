@@ -3,7 +3,7 @@ use syn::{parse_macro_input, spanned::Spanned, Data, DeriveInput, Fields};
 mod i18n;
 /// # Example
 /// ```
-/// # use ::annasul_marco::I18n;
+/// # use ::algosul_marco::I18n;
 /// #[derive(I18n)]
 /// struct Text {
 ///     #[i18n(ignore)]

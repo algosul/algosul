@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "annasul-marco"
+name = "algosul-marco"
 version = "0.0.1"
 dependencies = [
  "env_logger",
@@ -39,10 +39,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "annasul-rs"
+name = "algosul-rs"
 version = "0.0.1"
 dependencies = [
- "annasul-marco",
+ "algosul-marco",
  "env_logger",
  "glib",
  "gtk4",

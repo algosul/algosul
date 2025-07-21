@@ -1,4 +1,4 @@
-# annasul
+# algosul
 
 [![License: AGPL-v3.0-only](https://img.shields.io/badge/License-AGPL_v3_only-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 

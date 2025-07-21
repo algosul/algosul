@@ -5,7 +5,7 @@
 //!     let rustup = tokio::runtime::Runtime::new()
 //!         .unwrap()
 //!         .block_on(async {
-//!             use annasul::app::{
+//!             use algosul::app::{
 //!                 AppOper,
 //!                 apps::rust::{InstallInfo, Rustup},
 //!             };

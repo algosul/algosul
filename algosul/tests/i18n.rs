@@ -1,7 +1,7 @@
 use std::{fs::File, io::Read};
 
-use annasul::i18n::{I18n, I18nData};
-use annasul_marco::I18n;
+use algosul::i18n::{I18n, I18nData};
+use algosul_marco::I18n;
 use strfmt::strfmt;
 #[derive(I18n)]
 struct Text {

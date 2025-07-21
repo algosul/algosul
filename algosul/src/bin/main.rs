@@ -5,8 +5,7 @@ use std::{
     sync::LazyLock,
 };
 
-use annasul::app::{
-    AppOper,
+use algosul::app::{
     apps::rust::{
         HostTriple,
         InstallCustomInfo,
@@ -15,8 +14,11 @@ use annasul::app::{
         Rustup,
         Toolchain,
     },
+    AppOper,
 };
 use gtk4::{
+    glib::ExitCode,
+    prelude::*,
     Application,
     ApplicationWindow,
     Box,
@@ -30,8 +32,6 @@ use gtk4::{
     Orientation,
     StringList,
     StringObject,
-    glib::ExitCode,
-    prelude::*,
 };
 use tokio::{join, runtime::Runtime, sync::Mutex};
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]

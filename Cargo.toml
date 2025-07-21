@@ -1,12 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["annasul", "annasul-marco"]
+members = ["algosul", "algosul-marco"]
 [workspace.package]
 version = "0.0.1"
 authors = ["algosul@github.com"]
-homepage = "https://github.com/algosul/annasul"
-repository = "https://github.com/algosul/annasul"
-keywords = ["annasul"]
+homepage = "https://github.com/algosul/algosul"
+repository = "https://github.com/algosul/algosul"
+keywords = ["algosul"]
 license = "AGPL-3.0-only"
 edition = "2024"
 description = "Some user-friendly yet personalized tools"

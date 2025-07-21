@@ -1,5 +1,5 @@
 [package]
-name = "annasul-rs"
+name = "algosul-rs"
 version.workspace = true
 authors.workspace = true
 homepage.workspace = true
@@ -8,16 +8,15 @@ keywords.workspace = true
 license.workspace = true
 edition.workspace = true
 description.workspace = true
-documentation = "https://docs.rs/annasul"
 readme.workspace = true
 build = "build.rs"
 
 [lib]
-name = "annasul"
+name = "algosul"
 crate-type = ["rlib"]
 
 [[bin]]
-name = "annasul"
+name = "algosul"
 path = "src/bin/main.rs"
 required-features = ["app-apps", "gtk4", "glib"]
 
@@ -35,9 +34,9 @@ glib = ["dep:glib"]
 i18n = ["i18n-base"]
 i18n-base = ["dep:serde", "dep:toml", "dep:strfmt", "dep:sys-locale"]
 i18n-marco = ["i18n", "marco"]
-marco = ["dep:annasul-marco"]
+marco = ["dep:algosul-marco"]
 [dependencies]
-annasul-marco = { version = "0.0.1", path = "../annasul-marco", default-features = false, features = [], optional = true }
+algosul-marco = { version = "0.0.1", path = "../algosul-marco", default-features = false, features = [], optional = true }
 tokio = { version = "1.*", features = [
     "process",
     "io-util",
