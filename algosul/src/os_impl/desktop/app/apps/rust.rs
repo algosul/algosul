@@ -1,23 +1,17 @@
 use std::{
     borrow::Cow,
-    env,
-    ffi::{OsStr, OsString},
+    ffi::OsString,
     fmt::{Display, Formatter},
-    fs::{create_dir, exists, File},
-    io::{stderr, stdout, Write},
-    os::windows::ffi::OsStringExt,
+    fs::{create_dir, exists, metadata, File},
+    io::Write,
     path::{Path, PathBuf},
     process::{ExitStatus, Stdio},
     str::FromStr,
 };
 
 use log::{info, trace, warn};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tokio::{
-    io::{AsyncRead, AsyncReadExt},
-    process::Command,
-};
+use tokio::{io::AsyncReadExt, process::Command};
 
 use crate::app::AppLicense;
 #[derive(

@@ -5,7 +5,7 @@ use std::{
     sync::LazyLock,
 };
 
-use annasul::app::{
+use algosul::app::{
     AppOper,
     apps::rust::{
         HostTriple,

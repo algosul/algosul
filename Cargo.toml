@@ -1,43 +1,13 @@
-[package]
-name = "annasul"
+[workspace]
+resolver = "3"
+members = ["algosul", "algosul-core", "algosul-marco"]
+[workspace.package]
 version = "0.0.1"
 authors = ["algosul@github.com"]
-homepage = "https://github.com/algosul/annasul"
-repository = "https://github.com/algosul/annasul"
-keywords = ["annasul"]
+homepage = "https://github.com/algosul/algosul"
+repository = "https://github.com/algosul/algosul"
+keywords = ["algosul"]
 license = "AGPL-3.0-only"
 edition = "2024"
 description = "Some user-friendly yet personalized tools"
-documentation = "https://docs.rs/annasul"
 readme = "README.md"
-build = "build.rs"
-
-[lib]
-name = "annasul"
-crate-type = ["rlib"]
-
-[[bin]]
-name = "annasul"
-path = "src/bin/main.rs"
-required-features = ["app-apps", "gtk4", "glib"]
-
-[features]
-app = []
-app-apps = ["app"]
-gtk4 = ["dep:gtk4"]
-glib = ["dep:glib"]
-
-[dependencies]
-tokio = { version = "1.*", features = [
-    "process",
-    "io-util",
-    "rt",
-    "macros",
-    "rt-multi-thread",
-] }
-serde = { version = "1.*", features = ["derive"] }
-log = { version = "0.4", features = ["serde", "kv_serde"] }
-reqwest = { version = "0.11", features = ["blocking"] }
-env_logger = { version = "0.11" }
-gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
-glib = { version = "0.20", features = [], optional = true }
