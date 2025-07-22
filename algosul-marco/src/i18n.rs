@@ -1,13 +1,9 @@
-use std::{
-    any::Any,
-    collections::HashMap,
-    fmt::Debug,
-};
+use std::{any::Any, collections::HashMap, fmt::Debug};
 
 use itertools::Itertools;
 use log::{info, trace};
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
+use quote::{format_ident, quote_spanned, ToTokens};
 use syn::{
     meta::ParseNestedMeta,
     spanned::Spanned,
@@ -25,10 +21,10 @@ use crate::i18n::attrs::{Attr, IntoAttrs, ParseAttrs};
 mod attrs;
 #[derive(Debug)]
 struct I18nField {
-    name: String,
+    name:          String,
     original_name: Option<String>,
-    format: attrs::Format,
-    span: Span,
+    format:        attrs::Format,
+    span:          Span,
 }
 fn parse_attr_meta(
     meta: ParseNestedMeta, context: &mut HashMap<String, Box<dyn Attr>>,
@@ -124,35 +120,33 @@ fn parse_field(field: Field) -> syn::Result<Option<I18nField>> {
     parse_attrs(field.span(), ident, &field.attrs)
 }
 fn parse_fields(
-    error: &mut syn::Result<()>, fields: impl Iterator<Item=Field>,
-) -> impl Iterator<Item=I18nField> {
-    fields.filter_map(move |field| {
-        parse_field(field).unwrap_or_else(|err| {
-            if let Err(error) = error {
-                error.combine(err);
-            } else {
-                *error = Err(err);
+    fields: impl Iterator<Item = Field>,
+) -> syn::Result<Vec<I18nField>> {
+    let mut result = Vec::new();
+    let mut errors: Option<syn::Error> = None;
+    for field in fields {
+        match parse_field(field) {
+            Ok(None) => {}
+            Ok(Some(value)) => result.push(value),
+            Err(err) => {
+                if let Some(ref mut e) = errors {
+                    e.combine(err);
+                } else {
+                    errors = Some(err);
+                }
             }
-            None
-        })
-    })
+        }
+    }
+    if let Some(e) = errors { Err(e) } else { Ok(result) }
 }
 macro_rules! data_name {
     ($ident:ident) => {
         format_ident!("__algosul_i18n_{}_Data", $ident)
     };
 }
-pub(crate) fn parse_named_struct(
-    span: Span, vis: Visibility, name: Ident, fields: FieldsNamed,
+fn parse_i18n_fields(
+    span: Span, vis: Visibility, name: Ident, fields: Vec<I18nField>,
 ) -> syn::Result<TokenStream> {
-    trace!("named struct");
-    trace!("{{");
-    trace!("fields:");
-    let mut error = Ok(());
-    let fields: Vec<_> =
-        parse_fields(&mut error, fields.named.into_iter()).collect();
-    info!("{fields:#?}");
-    trace!("}}");
     let data_name = data_name!(name);
     trace!("{data_name}");
     let mut to_data_tokens = TokenStream::new();
@@ -168,9 +162,8 @@ pub(crate) fn parse_named_struct(
         let span = field.span;
         {
             let error_fmt = "'self.{}' must use [{}], but use {:?}";
-            let must_use_str = fmt.iter()
-                .map(|ident| ident.to_string())
-                .join(", ");
+            let must_use_str =
+                fmt.iter().map(|ident| ident.to_string()).join(", ");
             let items: Vec<_> = fmt
                 .iter()
                 .map(|ident| LitStr::new(&ident.to_string(), ident.span()))
@@ -187,9 +180,16 @@ pub(crate) fn parse_named_struct(
                     .map(|x| x.as_ref())
                     .collect::<HashSet<_>>()
                     != required_keys {
-                    return Err(::algosul_core::i18n::Error::FormatParameterMismatch(
-                        ::std::format!(#error_fmt, #name_str, #must_use_str, keys)
-                    ));
+                    return Err(
+                        ::algosul_core::i18n::Error::FormatParameterMismatch(
+                            ::std::format!(
+                                #error_fmt,
+                                #name_str,
+                                #must_use_str,
+                                keys
+                            )
+                        )
+                    );
                 }
             }});
         };
@@ -203,118 +203,18 @@ pub(crate) fn parse_named_struct(
             #name: String,
         });
     }
-    error.map(|()| {
-        quote_spanned! {span =>
-            impl ::algosul_core::i18n::I18n for #name {
-                type DataType = #data_name;
-                fn to_data(&self) -> Self::DataType {
-                    Self::DataType {
-                        #to_data_tokens
-                    }
-                }
-                fn into_data(self) -> Self::DataType {
-                    Self::DataType {
-                        #into_data_tokens
-                    }
-                }
-            }
-            #[allow(non_camel_case_types)]
-            #[doc(hidden)]
-            #[derive(
-                ::core::fmt::Debug,
-                ::serde::Serialize,
-                ::serde::Deserialize
-            )]
-            #vis struct #data_name {
-                #data_fields_tokens
-            }
-            impl ::algosul_core::i18n::I18nData for #data_name {
-                type I18n = #name;
-                fn check(&self) -> ::algosul_core::i18n::Result<()> {
-                    use ::std::collections::HashSet;
-                    fn keys(fmt: &str) -> ::strfmt::Result<HashSet<String>> {
-                        let mut buffer = HashSet::new();
-                        ::strfmt::strfmt_map(fmt, |fmt: ::strfmt::Formatter| {
-                            buffer.insert(fmt.key.to_string());
-                            Ok(())
-                        })?;
-                        Ok(buffer)
-                    }
-                    #check_tokens
-                    Ok(())
-                }
-            }
-            impl ::core::convert::Into<#data_name> for #name {
-                fn into(self) -> #data_name {
-                    use ::algosul_core::i18n::I18n;
-                    self.into_data()
-                }
-            }
-        }
-    })
-}
-pub(crate) fn parse_unnamed_struct(
-    span: Span, vis: Visibility, name: Ident, fields: FieldsUnnamed,
-) -> syn::Result<TokenStream> {
-    trace!("unnamed struct");
-    trace!("{{");
-    trace!("fields:");
-    let mut error = Ok(());
-    let fields: Vec<_> =
-        parse_fields(&mut error, fields.unnamed.into_iter()).collect();
-    info!("{fields:#?}");
-    trace!("}}");
-    let data_name = data_name!(name);
-    error.map(|()| {
-        quote_spanned! {span =>
-            impl ::algosul_core::i18n::I18n for #name {
-                type DataType = #data_name;
-                fn to_data(&self) -> Self::DataType {
-                    todo!()
-                }
-                fn into_data(self) -> Self::DataType {
-                    todo!()
-                }
-            }
-            #[allow(non_camel_case_types)]
-            #[doc(hidden)]
-            #[derive(
-                ::core::fmt::Debug,
-                ::serde::Serialize,
-                ::serde::Deserialize
-            )]
-            #vis struct #data_name {
-                #(
-                    #fields
-                ),*
-            }
-            impl ::algosul_core::i18n::I18nData for #data_name {
-                type I18n = #name;
-            }
-            impl ::core::convert::Into<#data_name> for #name {
-                fn into(self) -> #data_name {
-                    use ::algosul_core::i18n::I18n;
-                    self.into_data()
-                }
-            }
-        }
-    })
-}
-pub(crate) fn parse_unit_struct(
-    span: Span, vis: Visibility, name: Ident,
-) -> syn::Result<TokenStream> {
-    trace!("unit struct");
-    trace!("{{");
-    trace!("}}");
-    let data_name = data_name!(name);
-    Ok(quote_spanned! {span =>
+    let tokens = quote_spanned! {span =>
         impl ::algosul_core::i18n::I18n for #name {
             type DataType = #data_name;
             fn to_data(&self) -> Self::DataType {
-                todo!()
+                Self::DataType {
+                    #to_data_tokens
+                }
             }
             fn into_data(self) -> Self::DataType {
-                todo!()
+                Self::DataType {
+                    #into_data_tokens
+                }
             }
         }
         #[allow(non_camel_case_types)]
@@ -324,9 +224,24 @@ pub(crate) fn parse_unit_struct(
             ::serde::Serialize,
             ::serde::Deserialize
         )]
-        #vis struct #data_name;
+        #vis struct #data_name {
+            #data_fields_tokens
+        }
         impl ::algosul_core::i18n::I18nData for #data_name {
             type I18n = #name;
+            fn check(&self) -> ::algosul_core::i18n::Result<()> {
+                use ::std::collections::HashSet;
+                fn keys(fmt: &str) -> ::strfmt::Result<HashSet<String>> {
+                    let mut buffer = HashSet::new();
+                    ::strfmt::strfmt_map(fmt, |fmt: ::strfmt::Formatter| {
+                        buffer.insert(fmt.key.to_string());
+                        Ok(())
+                    })?;
+                    Ok(buffer)
+                }
+                #check_tokens
+                Ok(())
+            }
         }
         impl ::core::convert::Into<#data_name> for #name {
             fn into(self) -> #data_name {
@@ -334,7 +249,36 @@ pub(crate) fn parse_unit_struct(
                 self.into_data()
             }
         }
-    })
+    };
+    Ok(tokens)
+}
+pub(crate) fn parse_named_struct(
+    span: Span, vis: Visibility, name: Ident, fields: FieldsNamed,
+) -> syn::Result<TokenStream> {
+    trace!("named struct");
+    trace!("{{");
+    trace!("fields:");
+    let fields = parse_fields(fields.named.into_iter())?;
+    trace!("}}");
+    parse_i18n_fields(span, vis, name, fields)
+}
+pub(crate) fn parse_unnamed_struct(
+    span: Span, vis: Visibility, name: Ident, fields: FieldsUnnamed,
+) -> syn::Result<TokenStream> {
+    trace!("unnamed struct");
+    trace!("{{");
+    trace!("fields:");
+    let fields = parse_fields(fields.unnamed.into_iter())?;
+    trace!("}}");
+    parse_i18n_fields(span, vis, name, fields)
+}
+pub(crate) fn parse_unit_struct(
+    span: Span, vis: Visibility, name: Ident,
+) -> syn::Result<TokenStream> {
+    trace!("unit struct");
+    trace!("{{");
+    trace!("}}");
+    parse_i18n_fields(span, vis, name, vec![])
 }
 pub(crate) fn parse_enum(
     _span: Span, vis: Visibility, _name: Ident, data: DataEnum,
@@ -358,14 +302,4 @@ pub(crate) fn parse_enum(
     }
     trace!("}}");
     todo!()
-}
-impl ToTokens for I18nField {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let span = tokens.span();
-        let name = Ident::new(&self.name, span);
-        let r#type = quote_spanned!(span => String);
-        tokens.append_all(quote_spanned! {span =>
-            #name: #r#type
-        });
-    }
 }
