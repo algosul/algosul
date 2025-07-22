@@ -14,7 +14,7 @@ readme.workspace = true
 i18n = ["serde", "toml", "strfmt", "sys-locale"]
 
 [dependencies]
-serde = { version = "1.*", features = ["derive"], optional = true }
+serde = { version = "1.0.219", features = ["derive"], optional = true }
 toml = { version = "0.8.23", features = ["parse", "display"], optional = true }
-strfmt = { version = "*", optional = true }
+strfmt = { version = "0.2.5", optional = true }
 sys-locale = { version = "0.3.2", optional = true }

@@ -37,18 +37,18 @@ marco = ["dep:algosul-marco"]
 [dependencies]
 algosul-core = { version = "0.0.1", path = "../algosul-core", default-features = false, features = [], optional = true }
 algosul-marco = { version = "0.0.1", path = "../algosul-marco", default-features = false, features = [], optional = true }
-tokio = { version = "1.*", features = [
+tokio = { version = "1.46.1", features = [
     "process",
     "io-util",
     "rt",
     "macros",
     "rt-multi-thread",
 ], optional = true }
-serde = { version = "1.*", features = ["derive"], optional = true }
+serde = { version = "1.0.219", features = ["derive"], optional = true }
 log = { version = "0.4", features = ["serde", "kv_serde"] }
 reqwest = { version = "0.11", features = ["blocking"], optional = true }
 env_logger = { version = "0.11" }
 gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
 glib = { version = "0.20", features = [], optional = true }
-strfmt = { version = "*", optional = true }
+strfmt = { version = "0.2.5", optional = true }
 sys-locale = { version = "0.3.2", optional = true }
