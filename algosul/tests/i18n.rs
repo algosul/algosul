@@ -12,6 +12,12 @@ struct Text {
     #[i18n(format(name))]
     format:  String,
 }
+// #[derive(I18n)]
+// struct UnnamedText(
+//     #[i18n(ignore)] (),
+//     #[i18n(rename = "name")] String,
+//     #[i18n(rename = "format", format(name))] String,
+// );
 #[test]
 fn main() {
     let lang =

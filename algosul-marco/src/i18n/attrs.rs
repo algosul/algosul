@@ -6,12 +6,39 @@ use std::{
 };
 
 use log::{error, info, trace};
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 use quote::ToTokens;
 use syn::{meta::ParseNestedMeta, spanned::Spanned, LitStr};
 pub trait Attr: Debug + Any {
     fn name(&self) -> Cow<'static, str>;
     fn parse_meta(&mut self, meta: ParseNestedMeta) -> syn::Result<()>;
+    fn error_attr_already(&self, span: Span) -> syn::Error {
+        let name = self.name();
+        syn::Error::new(span, format!("{name} attribute is already set"))
+    }
+    fn check_input_not_empty(&self, meta: &ParseNestedMeta) -> syn::Result<()> {
+        if meta.input.is_empty() {
+            Err(syn::Error::new(
+                meta.path.span(),
+                format!("{} attribute requires an argument", self.name()),
+            ))
+        } else {
+            Ok(())
+        }
+    }
+    fn check_input_is_empty(&self, meta: &ParseNestedMeta) -> syn::Result<()> {
+        if meta.input.is_empty() {
+            Ok(())
+        } else {
+            Err(syn::Error::new(
+                meta.path.span(),
+                format!(
+                    "{} attribute does not take any arguments",
+                    self.name()
+                ),
+            ))
+        }
+    }
 }
 pub trait IntoAttrs {
     fn into_attrs(self) -> HashMap<String, Box<dyn Attr>>;
@@ -19,11 +46,14 @@ pub trait IntoAttrs {
 pub trait ParseAttrs<T> {
     fn parse_attrs(&mut self, input: T) -> syn::Result<()>;
 }
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Ignore(bool);
-#[derive(Default, Debug)]
-pub struct Rename(Option<String>);
-#[derive(Default, Debug, Clone)]
+#[derive(Debug)]
+pub struct Rename {
+    pub name:  String,
+    pub ident: Ident,
+}
+#[derive(Debug, Clone)]
 pub struct Format {
     pub fmt: HashSet<Ident>,
 }
@@ -51,91 +81,73 @@ impl Ignore {
 
     pub fn value(&self) -> bool { self.0 }
 }
-impl Attr for Ignore {
-    fn name(&self) -> Cow<'static, str> { Cow::Borrowed(Self::NAME) }
+impl Attr for Option<Ignore> {
+    fn name(&self) -> Cow<'static, str> { Cow::Borrowed(Ignore::NAME) }
 
     fn parse_meta(&mut self, meta: ParseNestedMeta) -> syn::Result<()> {
         let name = self.name();
-        if self.0 {
-            return Err(syn::Error::new(
-                meta.path.span(),
-                "ignore attribute is already set",
-            ));
+        if self.is_some() {
+            return Err(self.error_attr_already(meta.path.span()));
         }
-        if !meta.input.is_empty() {
-            return Err(syn::Error::new(
-                meta.path.span(),
-                "ignore attribute does not take any arguments",
-            ));
-        }
-        self.0 = true;
+        self.check_input_is_empty(&meta)?;
+        *self = Some(Ignore(true));
         info!("I18n({name})");
         Ok(())
     }
 }
 impl Rename {
     pub const NAME: &str = "rename";
-
-    pub fn value(&self) -> Option<&str> { self.0.as_deref() }
 }
-impl Attr for Rename {
-    fn name(&self) -> Cow<'static, str> { Cow::Borrowed(Self::NAME) }
+impl Attr for Option<Rename> {
+    fn name(&self) -> Cow<'static, str> { Cow::Borrowed(Rename::NAME) }
 
     fn parse_meta(&mut self, meta: ParseNestedMeta) -> syn::Result<()> {
-        let name = self.name();
-        if self.0.is_some() {
-            return Err(syn::Error::new(
-                meta.path.span(),
-                "rename attribute is already set",
-            ));
+        let rename = self.name();
+        if self.is_some() {
+            return Err(self.error_attr_already(meta.path.span()));
         }
-        if meta.input.is_empty() {
-            return Err(syn::Error::new(
-                meta.path.span(),
-                "rename attribute requires an argument",
-            ));
-        }
+        self.check_input_not_empty(&meta)?;
         let value: LitStr = meta.value()?.parse()?;
-        self.0 = Some(value.value());
-        info!("I18n({name} = {})", value.to_token_stream());
+        let (name, span) = (value.value(), value.span());
+        let ident = Ident::new(&name, span);
+        info!("I18n({rename} = {})", value.to_token_stream());
+        *self = Some(Rename { name, ident });
         Ok(())
     }
 }
 impl Format {
     pub const NAME: &str = "format";
-
-    pub fn fmt(&self) -> &HashSet<Ident> { &self.fmt }
 }
-impl Attr for Format {
-    fn name(&self) -> Cow<'static, str> { Cow::Borrowed(Self::NAME) }
+impl Attr for Option<Format> {
+    fn name(&self) -> Cow<'static, str> { Cow::Borrowed(Format::NAME) }
 
     fn parse_meta(&mut self, meta: ParseNestedMeta) -> syn::Result<()> {
         let span = meta.path.span();
-        if !self.fmt.is_empty() {
-            return Err(syn::Error::new(
-                span,
-                "format attribute is already set",
-            ));
+        if self.is_some() {
+            return Err(self.error_attr_already(span));
         }
+        self.check_input_not_empty(&meta)?;
         let input = meta.input;
         trace!("Parsing {input}");
+        let mut format = Format { fmt: HashSet::<Ident>::new() };
         meta.parse_nested_meta(|meta| {
             let name = meta.path.get_ident().unwrap();
             if !meta.input.is_empty() {
                 return Err(syn::Error::new(
                     meta.path.span(),
-                    "format(a, b, ...) can't has value",
+                    format!("{}(a, b, ...) can't has value", self.name()),
                 ));
             }
             trace!("  {name}");
-            self.fmt.insert(name.clone());
+            format.fmt.insert(name.clone());
             Ok(())
         })
         .map_err(|err| {
             error!("Parse failed: {err}");
             err
         })?;
-        info!("I18n(format)");
+        info!("I18n({})", self.name());
+        *self = Some(format);
         Ok(())
     }
 }

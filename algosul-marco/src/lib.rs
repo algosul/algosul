@@ -16,7 +16,7 @@ mod i18n;
 /// ```
 #[proc_macro_derive(I18n, attributes(i18n))]
 pub fn i18n_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    env_logger::init();
+    let _ = env_logger::try_init();
     trace!("Parsing i18n attribute: {input}");
     let input = parse_macro_input!(input as DeriveInput);
     let span = input.span();

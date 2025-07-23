@@ -1,10 +1,11 @@
 use std::{any::Any, collections::HashMap, fmt::Debug};
 
 use itertools::Itertools;
-use log::{info, trace};
+use log::trace;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote_spanned, ToTokens};
 use syn::{
+    ext::IdentExt,
     meta::ParseNestedMeta,
     spanned::Spanned,
     Attribute,
@@ -21,9 +22,9 @@ use crate::i18n::attrs::{Attr, IntoAttrs, ParseAttrs};
 mod attrs;
 #[derive(Debug)]
 struct I18nField {
-    name:          String,
-    original_name: Option<String>,
-    format:        attrs::Format,
+    name:          Ident,
+    original_name: Option<Ident>,
+    format:        Option<attrs::Format>,
     span:          Span,
 }
 fn parse_attr_meta(
@@ -32,12 +33,12 @@ fn parse_attr_meta(
     context.parse_attrs(meta)
 }
 fn parse_attrs(
-    span: Span, name: Option<String>, attrs: impl AsRef<[Attribute]>,
+    span: Span, name: Option<Ident>, attrs: impl AsRef<[Attribute]>,
 ) -> syn::Result<Option<I18nField>> {
     let context: Vec<Box<dyn Attr>> = vec![
-        Box::new(attrs::Ignore::default()),
-        Box::new(attrs::Rename::default()),
-        Box::new(attrs::Format::default()),
+        Box::new(Option::<attrs::Ignore>::default()),
+        Box::new(Option::<attrs::Rename>::default()),
+        Box::new(Option::<attrs::Format>::default()),
     ];
     let mut context = context.into_attrs();
     let mut error: Option<syn::Error> = None;
@@ -65,59 +66,56 @@ fn parse_attrs(
     if let Some(err) = error {
         return Err(err);
     }
-    let ignore = (context.get(attrs::Ignore::NAME).unwrap().as_ref()
-        as &dyn Any)
-        .downcast_ref::<attrs::Ignore>()
-        .unwrap_or_else(|| panic!("~~~ Inner ERROR: downcast error"))
-        .value();
-    let rename = (context.get(attrs::Rename::NAME).unwrap().as_ref()
-        as &dyn Any)
-        .downcast_ref::<attrs::Rename>()
-        .unwrap_or_else(|| panic!("~~~ Inner ERROR: downcast error"))
-        .value();
-    let format = (context.get(attrs::Format::NAME).unwrap().as_ref()
-        as &dyn Any)
-        .downcast_ref::<attrs::Format>()
-        .unwrap_or_else(|| panic!("~~~ Inner ERROR: downcast error"));
+    let ignore = (context.remove(attrs::Ignore::NAME).unwrap() as Box<dyn Any>)
+        .downcast::<Option<attrs::Ignore>>()
+        .unwrap_or_else(|_| panic!("~~~ Inner ERROR: downcast error"))
+        .map(|ignore| ignore.value());
+    let rename = (context.remove(attrs::Rename::NAME).unwrap() as Box<dyn Any>)
+        .downcast::<Option<attrs::Rename>>()
+        .unwrap_or_else(|_| panic!("~~~ Inner ERROR: downcast error"));
+    let format = (context.remove(attrs::Format::NAME).unwrap() as Box<dyn Any>)
+        .downcast::<Option<attrs::Format>>()
+        .unwrap_or_else(|_| panic!("~~~ Inner ERROR: downcast error"));
     const IGNORE: &str = attrs::Ignore::NAME;
     const RENAME: &str = attrs::Rename::NAME;
     const _FORMAT: &str = attrs::Format::NAME;
-    match (ignore, name, rename, format.clone()) {
-        (true, _, None, attrs::Format { fmt }) if fmt.is_empty() => Ok(None),
-        (true, _, _, _) => Err(syn::Error::new(
+    match (ignore, name, *rename, *format) {
+        (Some(true), _, None, None) => Ok(None),
+        (Some(true), _, _, _) => Err(syn::Error::new(
             span,
             format!("'{IGNORE}' cannot be used with other attributes"),
         )),
-        (false, Some(name), Some(rename), format) if name == rename => {
+        (_, Some(name), Some(rename), format)
+            if name.unraw() == rename.ident.unraw() =>
+        {
             eprintln!("WARNING: '{RENAME}' is the same as original name");
             Ok(Some(I18nField {
-                name: rename.to_owned(),
+                name: rename.ident.clone(),
                 original_name: Some(name),
                 format,
                 span,
             }))
         }
-        (false, name, Some(rename), format) => Ok(Some(I18nField {
-            name: rename.to_owned(),
+        (_, name, Some(rename), format) => Ok(Some(I18nField {
+            name: rename.ident.clone(),
             original_name: name,
             format,
             span,
         })),
-        (false, Some(name), None, format) => Ok(Some(I18nField {
+        (_, Some(name), None, format) => Ok(Some(I18nField {
             name: name.clone(),
             original_name: Some(name),
             format,
             span,
         })),
-        (false, None, None, _) => Err(syn::Error::new(
+        (_, None, None, _) => Err(syn::Error::new(
             span,
             format!("unnamed field must provide '{RENAME}' attribute"),
         )),
     }
 }
 fn parse_field(field: Field) -> syn::Result<Option<I18nField>> {
-    let ident = field.ident.as_ref().map(|ident| ident.to_string());
-    parse_attrs(field.span(), ident, &field.attrs)
+    parse_attrs(field.span(), field.ident, &field.attrs)
 }
 fn parse_fields(
     fields: impl Iterator<Item = Field>,
@@ -154,13 +152,12 @@ fn parse_i18n_fields(
     let mut data_fields_tokens = TokenStream::new();
     let mut check_tokens = TokenStream::new();
     for field in fields {
-        let o_name =
-            Ident::new(&field.original_name.unwrap(), Span::call_site());
-        let name = Ident::new(&field.name, Span::call_site());
+        let o_name = field.original_name.unwrap();
+        let name = field.name;
         let name_str = name.to_string();
-        let fmt = field.format.fmt();
         let span = field.span;
-        {
+        if let Some(fmt) = field.format {
+            let fmt = fmt.fmt;
             let error_fmt = "'self.{}' must use [{}], but use {:?}";
             let must_use_str =
                 fmt.iter().map(|ident| ident.to_string()).join(", ");
@@ -286,10 +283,10 @@ pub(crate) fn parse_enum(
     trace!("enum");
     trace!("{{");
     for variant in data.variants.into_iter() {
-        let ident = variant.ident.to_string();
-        parse_attrs(variant.span(), Some(ident), &variant.attrs)?;
         let vis = vis.clone();
         let span = variant.span();
+        let ident = variant.ident.clone();
+        parse_attrs(span, Some(ident), &variant.attrs)?;
         let _ = match (variant.fields, variant.ident) {
             (Fields::Named(fields), name) => {
                 parse_named_struct(span, vis, name, fields)
