@@ -5,7 +5,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-#[cfg(any(doc, feature = "app-apps"))]
+#[cfg(feature = "app-apps")]
 pub mod apps;
 /// application license
 #[derive(

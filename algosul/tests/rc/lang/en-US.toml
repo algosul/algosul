@@ -1,2 +1,4 @@
 name = "English"
 format = "{name}"
+number = 100
+list = [100, 100, 20]

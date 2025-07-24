@@ -21,19 +21,19 @@ path = "src/bin/main.rs"
 required-features = ["app-apps", "gtk4", "glib"]
 
 [[test]]
-name = "i18n"
-path = "tests/i18n.rs"
-required-features = ["i18n-marco"]
+name = "asset"
+path = "tests/asset.rs"
+required-features = ["asset", "image"]
 
 [features]
-default = ["app-apps", "i18n"]
+default = ["app-apps", "asset"]
 app = []
-app-apps = ["app", "dep:serde", "dep:tokio", "dep:reqwest"]
+app-apps = ["app", "dep:tokio", "dep:reqwest"]
+asset = ["dep:toml"]
 gtk4 = ["dep:gtk4"]
 glib = ["dep:glib"]
-i18n = ["algosul-core/i18n", "dep:strfmt", "dep:sys-locale"]
-i18n-marco = ["i18n", "marco"]
 marco = ["dep:algosul-marco"]
+image = ["dep:image"]
 [dependencies]
 algosul-core = { version = "0.0.1", path = "../algosul-core", default-features = false, features = [], optional = true }
 algosul-marco = { version = "0.0.1", path = "../algosul-marco", default-features = false, features = [], optional = true }
@@ -44,7 +44,8 @@ tokio = { version = "1.46.1", features = [
     "macros",
     "rt-multi-thread",
 ], optional = true }
-serde = { version = "1.0.219", features = ["derive"], optional = true }
+serde = { version = "1.0.219", features = ["derive"] }
+toml = { version = "0.9", optional = true }
 log = { version = "0.4", features = ["serde", "kv_serde"] }
 reqwest = { version = "0.11", features = ["blocking"], optional = true }
 env_logger = { version = "0.11" }
@@ -52,3 +53,4 @@ gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
 glib = { version = "0.20", features = [], optional = true }
 strfmt = { version = "0.2.5", optional = true }
 sys-locale = { version = "0.3.2", optional = true }
+image = { version = "0.25", optional = true } 

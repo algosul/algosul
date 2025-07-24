@@ -18,9 +18,9 @@
 //! ```
 
 #![allow(async_fn_in_trait)]
-#[cfg(any(doc, feature = "app"))]
+#[cfg(feature = "app")]
 pub mod app;
-#[cfg(any(doc, feature = "i18n"))]
-pub mod i18n;
+#[cfg(feature = "asset")]
+pub mod asset;
 mod marco;
-mod os_impl;
+mod os;
