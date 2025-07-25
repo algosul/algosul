@@ -1,7 +1,5 @@
 #[cfg(feature = "codegen")]
 pub mod codegen;
-#[cfg(feature = "i18n")]
-pub mod i18n;
 #[macro_export]
 macro_rules! mod_all_os {
     {$vis:vis} => {

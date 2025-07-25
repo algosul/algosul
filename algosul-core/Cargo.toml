@@ -11,12 +11,7 @@ description.workspace = true
 readme.workspace = true
 
 [features]
-i18n = ["serde", "toml", "strfmt", "sys-locale"]
 codegen = ["unicode-xid"]
 
 [dependencies]
-serde = { version = "1.0.*", features = ["derive"], optional = true }
-toml = { version = "0.8.*", features = ["parse", "display"], optional = true }
-strfmt = { version = "0.2.*", optional = true }
-sys-locale = { version = "0.3.*", optional = true }
 unicode-xid = { version = "0.2.*", optional = true }
