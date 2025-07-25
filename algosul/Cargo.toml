@@ -10,6 +10,10 @@ edition.workspace = true
 description.workspace = true
 readme.workspace = true
 build = "build.rs"
+autotests = false
+autobins = false
+autobenches = false
+autoexamples = false
 
 [lib]
 name = "algosul"
@@ -23,34 +27,90 @@ required-features = ["app-apps", "gtk4", "glib"]
 [[test]]
 name = "asset"
 path = "tests/asset.rs"
-required-features = ["asset", "image"]
+required-features = ["asset-image", "asset-text", "macros"]
 
 [features]
 default = ["app-apps", "asset"]
+
 app = []
 app-apps = ["app", "dep:tokio", "dep:reqwest"]
+
 asset = ["dep:toml"]
+asset-text = ["asset", "dep:strfmt", "dep:itertools"]
+asset-image = ["asset", "dep:image"]
+
 gtk4 = ["dep:gtk4"]
 glib = ["dep:glib"]
-marco = ["dep:algosul-marco"]
-image = ["dep:image"]
-[dependencies]
-algosul-core = { version = "0.0.1", path = "../algosul-core", default-features = false, features = [], optional = true }
-algosul-marco = { version = "0.0.1", path = "../algosul-marco", default-features = false, features = [], optional = true }
-tokio = { version = "1.46.1", features = [
+macros = ["dep:algosul-derive"]
+
+[dependencies.image]
+version = "0.25"
+features = ["serde"]
+optional = true
+
+[dependencies.sys-locale]
+version = "0.3.2"
+optional = true
+
+[dependencies.strfmt]
+version = "0.2.5"
+optional = true
+
+[dependencies.glib]
+version = "0.20"
+features = []
+optional = true
+
+[dependencies.gtk4]
+version = "0.9"
+features = ["v4_10"]
+optional = true
+
+[dependencies.env_logger]
+version = "0.11"
+
+[dependencies.reqwest]
+version = "0.11"
+features = ["blocking"]
+optional = true
+
+[dependencies.log]
+version = "0.4"
+features = ["serde", "kv_serde"]
+
+[dependencies.toml]
+version = "0.9"
+optional = true
+
+[dependencies.serde]
+version = "1.0.219"
+features = ["derive"]
+
+[dependencies.tokio]
+version = "1.46.1"
+features = [
     "process",
     "io-util",
     "rt",
     "macros",
     "rt-multi-thread",
-], optional = true }
-serde = { version = "1.0.219", features = ["derive"] }
-toml = { version = "0.9", optional = true }
-log = { version = "0.4", features = ["serde", "kv_serde"] }
-reqwest = { version = "0.11", features = ["blocking"], optional = true }
-env_logger = { version = "0.11" }
-gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
-glib = { version = "0.20", features = [], optional = true }
-strfmt = { version = "0.2.5", optional = true }
-sys-locale = { version = "0.3.2", optional = true }
-image = { version = "0.25", optional = true } 
+]
+optional = true
+
+[dependencies.algosul-derive]
+version = "0.0.1"
+path = "../algosul-derive"
+default-features = false
+features = []
+optional = true
+
+[dependencies.algosul-core]
+version = "0.0.1"
+path = "../algosul-core"
+default-features = false
+features = []
+
+[dependencies.itertools]
+version = "0.14.0"
+features = []
+optional = true

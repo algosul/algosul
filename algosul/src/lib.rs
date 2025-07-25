@@ -1,3 +1,4 @@
+#![feature(adt_const_params)]
 //! #Example
 //! ```no_run
 //! #[cfg(feature = "app-apps")]
@@ -22,5 +23,8 @@
 pub mod app;
 #[cfg(feature = "asset")]
 pub mod asset;
-mod marco;
+#[cfg(feature = "macros")]
+pub mod macros;
+#[cfg(not(feature = "macros"))]
+pub(crate) mod macros;
 mod os;

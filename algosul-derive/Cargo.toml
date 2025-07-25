@@ -1,5 +1,5 @@
 [package]
-name = "algosul-marco"
+name = "algosul-derive"
 version.workspace = true
 authors.workspace = true
 homepage.workspace = true
@@ -17,12 +17,18 @@ proc-macro = true
 [features]
 
 [dependencies]
-algosul-core = { version = "0.0.1", path = "../algosul-core", default-features = false, features = ["i18n"] }
 env_logger = "0.11.8"
-proc-macro2 = "1.0.95"
+proc-macro2 = { version = "1.0.95", features = ["span-locations"] }
 quote = "1.0.40"
 syn = { version = "2.0.104", features = ["full"] }
 log = "0.4.27"
 itertools = { version = "0.14.0" }
 serde = { version = "1.0.219", features = ["derive"] }
 strfmt = { version = "0.2.5" }
+
+[dependencies.algosul-core]
+version = "0.0.1"
+path = "../algosul-core"
+default-features = false
+features = ["codegen"]  
+ 

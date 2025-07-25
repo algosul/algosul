@@ -31,11 +31,12 @@ name = "algosul"
 version = "0.0.1"
 dependencies = [
  "algosul-core",
- "algosul-marco",
+ "algosul-derive",
  "env_logger",
  "glib",
  "gtk4",
  "image",
+ "itertools 0.14.0",
  "log",
  "reqwest",
  "serde",
@@ -53,10 +54,11 @@ dependencies = [
  "strfmt",
  "sys-locale",
  "toml 0.8.23",
+ "unicode-xid",
 ]
 
 [[package]]
-name = "algosul-marco"
+name = "algosul-derive"
 version = "0.0.1"
 dependencies = [
  "algosul-core",
@@ -1160,6 +1162,7 @@ dependencies = [
  "ravif",
  "rayon",
  "rgb",
+ "serde",
  "tiff",
  "zune-core",
  "zune-jpeg",
@@ -2531,6 +2534,12 @@ name = "unicode-ident"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
+
+[[package]]
+name = "unicode-xid"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
 name = "url"
