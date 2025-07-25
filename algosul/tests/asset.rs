@@ -1,4 +1,3 @@
-use algosul::macros::from_dir;
 // const ARGS: FormatArgs = FormatArgs::new(["name"]);
 // #[derive(Debug, Serialize, Deserialize)]
 // struct Asset {
@@ -11,9 +10,13 @@ use algosul::macros::from_dir;
 //     text:  FormatText,
 //     image: Image,
 // }
-from_dir!(asset, "rc");
+mod assets {
+    use algosul_derive::from_dir;
+    from_dir!(pub mod lang from "rc/lang" filter [include ["*.toml"] exclude []]);
+    from_dir!(pub mod images from "rc/images" filter [include ["*.png"] exclude []]);
+}
 #[test]
 fn main() {
-    let locale = asset::lang::zh_CN_toml;
+    let locale = assets::lang::en_US;
     println!("{locale}");
 }

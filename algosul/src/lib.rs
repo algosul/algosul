@@ -1,4 +1,3 @@
-#![feature(adt_const_params)]
 //! #Example
 //! ```no_run
 //! #[cfg(feature = "app-apps")]
