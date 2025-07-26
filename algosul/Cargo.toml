@@ -57,12 +57,12 @@ version = "0.2.5"
 optional = true
 
 [dependencies.glib]
-version = "0.20"
+version = "0.21.0"
 features = []
 optional = true
 
 [dependencies.gtk4]
-version = "0.9"
+version = "0.10.0"
 features = ["v4_10"]
 optional = true
 
@@ -70,7 +70,7 @@ optional = true
 version = "0.11"
 
 [dependencies.reqwest]
-version = "0.11"
+version = "0.12.22"
 features = ["blocking"]
 optional = true
 

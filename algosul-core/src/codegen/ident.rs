@@ -1,18 +1,18 @@
-use std::ffi::{CStr, CString, OsStr, OsString};
+use std::{
+    borrow::Borrow,
+    ffi::{CStr, CString, OsStr, OsString},
+    str::FromStr,
+};
 
 use unicode_xid::UnicodeXID;
 pub trait StrExt {
+    type Owned: Borrow<Self>;
     fn is_valid_ident(&self) -> bool;
-}
-pub trait StrMapExt {
-    type Item;
-    fn map_to_valid_ident(&self) -> impl Iterator<Item = Self::Item>;
-}
-pub trait StringExt: Sized {
-    fn to_valid_ident(&self) -> Self
-    where Self: Sized;
+    fn to_valid_ident(&self) -> Self::Owned;
 }
 impl StrExt for str {
+    type Owned = String;
+
     fn is_valid_ident(&self) -> bool {
         let mut chars = self.chars();
         match chars.next() {
@@ -22,49 +22,47 @@ impl StrExt for str {
             _ => false,
         }
     }
-}
-impl StrMapExt for str {
-    type Item = char;
 
-    fn map_to_valid_ident(&self) -> impl Iterator<Item = char> {
+    fn to_valid_ident(&self) -> Self::Owned {
         let mut chars = self.chars();
-        std::iter::once(
-            chars.next().filter(|&c| c.is_xid_start()).unwrap_or('_'),
-        )
-        .chain(chars.map(|c| if c.is_xid_continue() { c } else { '_' }))
+        let mut buffer = String::new();
+        let first = chars.next();
+        let first = first
+            .filter(|&c| {
+                if c.is_ascii_digit() {
+                    buffer.push('_');
+                    return true;
+                };
+                c.is_xid_start()
+            })
+            .unwrap_or('_');
+        buffer.push(first);
+        chars.for_each(|c| {
+            if c.is_xid_continue() { buffer.push(c) } else { buffer.push('_') }
+        });
+        buffer
     }
 }
 impl StrExt for OsStr {
+    type Owned = OsString;
+
     fn is_valid_ident(&self) -> bool {
         self.to_str().map(str::is_valid_ident).unwrap_or(false)
+    }
+
+    fn to_valid_ident(&self) -> Self::Owned {
+        OsString::from(self.to_string_lossy().to_valid_ident())
     }
 }
 impl StrExt for CStr {
+    type Owned = CString;
+
     fn is_valid_ident(&self) -> bool {
         self.to_str().map(str::is_valid_ident).unwrap_or(false)
     }
-}
-impl StringExt for String {
-    fn to_valid_ident(&self) -> Self
-    where Self: Sized {
-        self.map_to_valid_ident().collect()
-    }
-}
-impl StringExt for OsString {
-    fn to_valid_ident(&self) -> Self
-    where Self: Sized {
-        OsString::from(
-            self.to_string_lossy().map_to_valid_ident().collect::<String>(),
-        )
-    }
-}
-impl StringExt for CString {
-    fn to_valid_ident(&self) -> Self
-    where Self: Sized {
-        CString::new(
-            self.to_string_lossy().map_to_valid_ident().collect::<String>(),
-        )
-        .unwrap()
+
+    fn to_valid_ident(&self) -> Self::Owned {
+        CString::from_str(&self.to_string_lossy().to_valid_ident()).unwrap()
     }
 }
 #[cfg(test)]

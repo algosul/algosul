@@ -1,43 +1,43 @@
-use std::borrow::Cow;
-
-use itertools::Itertools;
-use log::trace;
+use log::debug;
 use proc_macro::TokenStream;
 use syn::parse2;
 
-use crate::from_dir::Input;
-mod array;
+use crate::from_dir::InputBuf;
 mod filter;
 mod from_dir;
-/// # Examples
-///
+mod tokens;
+/// Convert from folder to module
+/// # Grammar
+/// ```ignore
+/// // use
+/// from_dir!($module)
+/// // $module
+/// $vis mod $ident from $path {
+///     $($filter;)*
+/// }
+/// // $filter (text)
+/// text $file_filter
+/// // $filter (binary)
+/// binary $file_filter
+/// // $file_filter
+/// [$(include [$($path),*] exclude [$($path),*]),*]
+/// ```
+/// # Example
 /// ```
 /// # use algosul_derive::from_dir;
-/// from_dir!(
-///     pub mod asset from "/path/to/asset" filter [
-///         include ["**"] exclude []
-///     ]
-/// );
+/// from_dir!(mod assets from "../rc" {
+///     text [include ["lang/*.toml"] exclude []];
+///     binary [include ["images/*.png"] exclude []];
+/// });
+/// println!("en-US.toml: {}", assets::lang::en_US);
+/// println!("zh-CN.toml: {}", assets::lang::zh_CN);
 /// ```
 #[proc_macro]
 pub fn from_dir(input: TokenStream) -> TokenStream {
     let _ = env_logger::try_init();
     let path = proc_macro::Span::call_site().local_file().unwrap();
     let base = path.parent().unwrap();
-    let mut input: Input = parse2(input.into()).unwrap();
-    input.path = Cow::Owned(base.join(&input.path));
-    let debug: Vec<_> = input
-        .filter
-        .items
-        .iter()
-        .map(|item| {
-            let includes: Vec<_> =
-                item.includes.iter().map(|item| item.as_str()).collect();
-            let excludes: Vec<_> =
-                item.excludes.iter().map(|item| item.as_str()).collect();
-            format!("include {includes:?} exclude {excludes:?}")
-        })
-        .collect();
-    trace!("filter {debug:?}");
-    from_dir::from_dir(base, input).unwrap().into()
+    let input: InputBuf = parse2(input.into()).unwrap();
+    debug!("base: {base:?}, input: {:?}", input.path());
+    from_dir::from_dir(base, input.path(), input.as_ref()).unwrap().into()
 }

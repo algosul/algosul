@@ -1,32 +1,33 @@
-use std::path::Path;
+use std::{
+    fmt::{Debug, Formatter},
+    path::Path,
+};
 
 use syn::{
     parse::{Parse, ParseStream},
     LitStr,
 };
 
-use crate::from_dir::filter;
+use crate::tokens::Array;
 syn::custom_keyword!(include);
 syn::custom_keyword!(exclude);
 #[derive(Clone)]
 pub struct FileFilterItemTokens {
     #[allow(dead_code)]
     include:  include,
-    includes: crate::array::Array<LitStr>,
+    includes: Array<LitStr>,
     #[allow(dead_code)]
     exclude:  exclude,
-    excludes: crate::array::Array<LitStr>,
+    excludes: Array<LitStr>,
 }
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FileFilterItem {
     pub includes: Vec<glob::Pattern>,
     pub excludes: Vec<glob::Pattern>,
 }
 #[derive(Clone)]
 pub struct FileFilterTokens {
-    #[allow(dead_code)]
-    filter_ident: filter,
-    items:        crate::array::Array<FileFilterItem>,
+    items: Array<FileFilterItemTokens>,
 }
 #[derive(Debug, Clone)]
 pub struct FileFilter {
@@ -42,9 +43,8 @@ impl Parse for FileFilterItemTokens {
         })
     }
 }
-impl Parse for FileFilterItem {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let tokens: FileFilterItemTokens = input.parse()?;
+impl From<FileFilterItemTokens> for FileFilterItem {
+    fn from(tokens: FileFilterItemTokens) -> Self {
         let includes: Vec<_> = tokens
             .includes
             .into_elems()
@@ -55,44 +55,65 @@ impl Parse for FileFilterItem {
             .into_elems()
             .map(|x| glob::Pattern::new(&x.value()).unwrap())
             .collect();
-        Ok(Self { includes, excludes })
+        Self { includes, excludes }
+    }
+}
+impl Parse for FileFilterItem {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(input.parse::<FileFilterItemTokens>()?.into())
+    }
+}
+impl From<FileFilterTokens> for FileFilter {
+    fn from(tokens: FileFilterTokens) -> Self {
+        Self {
+            items: tokens
+                .items
+                .into_elems()
+                .map(FileFilterItem::from)
+                .collect(),
+        }
     }
 }
 impl Parse for FileFilterTokens {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        Ok(Self { filter_ident: input.parse()?, items: input.parse()? })
+        Ok(Self { items: input.parse()? })
     }
 }
 impl Parse for FileFilter {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let tokens: FileFilterTokens = input.parse()?;
-        Ok(Self { items: tokens.items.into_elems().collect() })
+        Ok(input.parse::<FileFilterTokens>()?.into())
     }
 }
 impl FileFilterItem {
-    pub fn dir_is_in_includes(&self, dir: &Path) -> bool {
-        self.includes.iter().any(|item| item.matches_path(dir))
-    }
-
-    pub fn dir_is_in_excludes(&self, dir: &Path) -> bool {
-        self.excludes.iter().any(|item| item.matches_path(dir))
-    }
-
     pub fn path_is_in(&self, file: &Path) -> bool {
         self.includes.iter().any(|item| item.matches_path(file))
             && !self.excludes.iter().any(|item| item.matches_path(file))
     }
 }
 impl FileFilter {
-    pub fn dir_is_in_includes(&self, dir: &Path) -> bool {
-        self.items.iter().any(|item| item.dir_is_in_includes(dir))
-    }
-
-    pub fn dir_is_in_excludes(&self, dir: &Path) -> bool {
-        self.items.iter().any(|item| item.dir_is_in_excludes(dir))
-    }
-
     pub fn path_is_in(&self, file: &Path) -> bool {
         self.items.iter().any(|item| item.path_is_in(file))
+    }
+}
+impl Debug for FileFilterItem {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FileFilterItem")
+            .field(
+                "include",
+                &self
+                    .includes
+                    .iter()
+                    .map(|item| item.as_str())
+                    .collect::<Vec<_>>(),
+            )
+            .field(
+                "exclude",
+                &self
+                    .excludes
+                    .iter()
+                    .map(|item| item.as_str())
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
     }
 }
