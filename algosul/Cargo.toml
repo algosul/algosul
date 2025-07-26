@@ -27,7 +27,7 @@ required-features = ["app-apps", "gtk4", "glib"]
 [[test]]
 name = "asset"
 path = "tests/asset.rs"
-required-features = ["asset-image", "asset-text", "macros"]
+required-features = ["asset-image", "asset-text", "macros", "rayon"]
 
 [features]
 default = ["app-apps", "asset"]
@@ -95,6 +95,11 @@ features = [
     "macros",
     "rt-multi-thread",
 ]
+optional = true
+
+[dependencies.rayon]
+version = "1.10.0"
+features = []
 optional = true
 
 [dependencies.algosul-derive]

@@ -38,6 +38,7 @@ dependencies = [
  "image",
  "itertools 0.14.0",
  "log",
+ "rayon",
  "reqwest",
  "serde",
  "strfmt",
