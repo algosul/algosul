@@ -103,14 +103,14 @@ features = []
 optional = true
 
 [dependencies.algosul-derive]
-version = "0.0.2"
+version = "0.0.3"
 path = "../algosul-derive"
 default-features = false
 features = []
 optional = true
 
 [dependencies.algosul-core]
-version = "0.0.2"
+version = "0.0.3"
 path = "../algosul-core"
 default-features = false
 features = []
