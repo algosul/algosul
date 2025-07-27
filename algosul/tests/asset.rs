@@ -1,8 +1,8 @@
 use std::fmt::Write;
 
 use algosul_derive::from_dir;
-use image::{imageops::FilterType, Rgb};
-use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
+use image::{imageops::FilterType, Rgb, Rgba};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 from_dir!(pub mod assets from "rc" {
     text [include ["lang/*.toml"] exclude []];
     binary [include ["images/*.png"] exclude []];
@@ -12,8 +12,8 @@ fn main() {
     let locale = assets::lang::en_US;
     println!("{locale}");
     let image = image::load_from_memory(assets::images::_0).unwrap();
-    let image = image.resize(160, 120, FilterType::Nearest);
-    let image = image.to_rgb8();
+    let image = image.resize(351 / 3, 237 / 3, FilterType::Triangle);
+    let image = image.to_rgba8();
     let (width, height) = image.dimensions();
     let mut buffer = (0..height)
         .step_by(2)
@@ -25,12 +25,12 @@ fn main() {
                 let bottom = if y + 1 < height {
                     image.get_pixel(x, y + 1)
                 } else {
-                    &Rgb([0, 0, 0])
+                    &Rgba([0, 0, 0, 0])
                 };
                 write!(
                     buffer,
                     "\x1b[48;2;{};{};{}m\x1b[38;2;{};{};{}m▀",
-                    top[0], top[1], top[2], bottom[0], bottom[1], bottom[2]
+                    bottom[0], bottom[1], bottom[2], top[0], top[1], top[2]
                 )
                 .unwrap();
             }
