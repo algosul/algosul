@@ -4,7 +4,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use algosul_core::codegen::ident::StrExt;
+use algosul_core::codegen::{
+    filter::{FileFilter, FileFilterTokens},
+    ident::StrExt,
+    tokens::Block,
+};
 use log::{debug, warn};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote_spanned;
@@ -15,11 +19,6 @@ use syn::{
     LitStr,
     Token,
     Visibility,
-};
-
-use crate::{
-    filter::{FileFilter, FileFilterTokens},
-    tokens::Block,
 };
 custom_keyword!(from);
 custom_keyword!(text);

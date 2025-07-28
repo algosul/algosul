@@ -3,9 +3,7 @@ use proc_macro::TokenStream;
 use syn::parse2;
 
 use crate::from_dir::InputBuf;
-mod filter;
 mod from_dir;
-mod tokens;
 /// Convert from folder to module
 /// # Grammar
 /// ```ignore

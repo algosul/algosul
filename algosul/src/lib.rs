@@ -22,6 +22,10 @@
 pub mod app;
 #[cfg(feature = "asset")]
 pub mod asset;
+#[cfg(feature = "codegen")]
+pub mod codegen;
+#[cfg(feature = "deps")]
+pub mod deps;
 #[cfg(feature = "macros")]
 pub mod macros;
 #[cfg(not(feature = "macros"))]
