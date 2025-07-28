@@ -3,7 +3,7 @@ use std::{env, path::Path};
 use algosul_core::codegen::{ident::StrExt, module::ModuleExt};
 use glob::PatternError;
 use proc_macro2::{Ident, Span};
-use syn::{parse_quote, ItemMod};
+use syn::{ItemMod, parse_quote};
 fn from_dir(path: impl AsRef<Path>) -> Result<(), PatternError> {
     let path = path.as_ref();
     println!("cargo:rerun-if-changed={path:?}");
