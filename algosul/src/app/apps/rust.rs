@@ -2,16 +2,18 @@ use std::{
     borrow::Cow,
     ffi::OsString,
     fmt::{Display, Formatter},
-    fs::{create_dir, exists, metadata, File},
-    io::Write,
+    io,
     path::{Path, PathBuf},
     process::{ExitStatus, Stdio},
     str::FromStr,
 };
 
-use log::{info, trace, warn};
+use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
-use tokio::{io::AsyncReadExt, process::Command};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    process::Command,
+};
 
 use crate::app::AppLicense;
 #[derive(
@@ -32,7 +34,7 @@ pub struct Rustup {
 #[derive(Debug)]
 pub enum Error {
     Unsupported(Cow<'static, str>),
-    IOError(std::io::Error),
+    IOError(io::Error),
     TaskJoinError(tokio::task::JoinError),
     InnerError(Cow<'static, str>),
     Failed {
@@ -84,6 +86,9 @@ impl std::error::Error for Error {
             Error::RequestError(e) => Some(e),
         }
     }
+}
+impl From<io::Error> for Error {
+    fn from(value: io::Error) -> Self { Self::IOError(value) }
 }
 pub type Result<T> = std::result::Result<T, Error>;
 #[derive(
@@ -169,8 +174,32 @@ pub enum InstallInfo {
     Default,
     Custom(InstallCustomInfo),
 }
+impl InstallInfo {
+    pub fn to_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+        match self {
+            InstallInfo::Default => {}
+            InstallInfo::Custom(InstallCustomInfo {
+                default_host_triple,
+                default_toolchain,
+                profile,
+                modify_path_variable,
+            }) => {
+                args.push(format!(
+                    "--default-host-triple='{default_host_triple}'"
+                ));
+                args.push(format!("--default-toolchain='{default_toolchain}'"));
+                args.push(format!("--profile='{profile}'"));
+                if *modify_path_variable {
+                    args.push(" --modify-path".to_string());
+                }
+            }
+        };
+        args
+    }
+}
 #[cfg(unix)]
-async fn download_rustup_init_sh() -> Result<()> {
+async fn download_rustup_init_sh() -> Result<String> {
     let url = "https://sh.rustup.rs";
     let content = reqwest::get(url)
         .await
@@ -178,42 +207,25 @@ async fn download_rustup_init_sh() -> Result<()> {
         .text()
         .await
         .map_err(Error::RequestError)?;
-    if !exists("./cache").map_err(Error::IOError)? {
-        create_dir("cache").map_err(Error::IOError)?;
-    }
-    let mut file =
-        File::create("./cache/rustup-init.sh").map_err(Error::IOError)?;
-    file.write_all(content.as_bytes()).map_err(Error::IOError)?;
-    Ok(())
+    Ok(content)
 }
 #[cfg(windows)]
 async fn download_rustup_init_exe() -> Result<()> {
     let url = format!("https://win.rustup.rs/{}", env::consts::ARCH);
     info!("url: {url}");
-    if !exists("./cache").map_err(Error::IOError)? {
-        create_dir("cache").map_err(Error::IOError)?;
+    if !exists("./cache")? {
+        create_dir("cache")?;
     }
     let client = Client::new();
     let response = client.get(url).send().await.map_err(Error::RequestError)?;
     if response.status().is_success() {
-        let mut file =
-            File::create("./cache/rustup-init.exe").map_err(Error::IOError)?;
+        let mut file = File::create("./cache/rustup-init.exe")?;
         let bytes = response.bytes().await.map_err(Error::RequestError)?;
-        file.write_all(bytes.as_ref()).map_err(Error::IOError)?;
+        file.write_all(bytes.as_ref())?;
         info!("Download OK");
     } else {
         panic!("Download failed, Code: {}", response.status());
     }
-    Ok(())
-}
-#[cfg(unix)]
-async fn chmod_rustup_init_sh() -> Result<()> {
-    use std::os::unix::fs::PermissionsExt;
-    let path = Path::new("./cache/rustup-init.sh");
-    let metadata = metadata(path).map_err(Error::IOError)?;
-    let mut permissions = metadata.permissions();
-    permissions.set_mode(permissions.mode() | 0o100);
-    std::fs::set_permissions(path, permissions).map_err(Error::IOError)?;
     Ok(())
 }
 impl Display for Toolchain {
@@ -338,57 +350,50 @@ impl crate::app::AppOper for Rustup {
         #[cfg(unix)]
         {
             use std::os::unix::ffi::OsStringExt;
-            trace!("Installing Rustup with info: {info:?}");
-            download_rustup_init_sh().await?;
-            trace!("Downloaded rustup-init.sh successfully");
-            chmod_rustup_init_sh().await?;
-            trace!("Chmod rustup-init.sh successfully");
-            let shell: Cow<'static, str> = match info {
-                InstallInfo::Default => "./cache/rustup-init.sh -y".into(),
+            debug!("Installing Rustup with info: {info:?}");
+            let shell = download_rustup_init_sh().await?;
+            info!("Downloaded rustup-init.sh successfully");
+            let mut args = Vec::new();
+            match info {
+                InstallInfo::Default => {}
                 InstallInfo::Custom(InstallCustomInfo {
                     default_host_triple,
                     default_toolchain,
                     profile,
                     modify_path_variable,
-                }) => format!(
-                    "./cache/rustup-init.sh -y --default-host-triple='{}' \
-                     --default-toolchain='{}' --profile='{}'{}",
-                    default_host_triple,
-                    default_toolchain,
-                    profile,
-                    if modify_path_variable { " --modify-path" } else { "" }
-                )
-                .into(),
+                }) => {
+                    args.push(format!(
+                        "--default-host-triple='{default_host_triple}'"
+                    ));
+                    args.push(format!(
+                        "--default-toolchain='{default_toolchain}'"
+                    ));
+                    args.push(format!("--profile='{profile}'"));
+                    if modify_path_variable {
+                        args.push(" --modify-path".to_string());
+                    }
+                }
             };
-            trace!("Shell command to execute: {shell}");
-            let mut command = Command::new("/usr/bin/sh")
-                .stdin(Stdio::null())
+            debug!("Shell args: {args:?}");
+            let mut command = Command::new("/bin/sh")
+                .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
-                .arg("-c")
-                .arg(shell.as_ref())
-                .spawn()
-                .map_err(Error::IOError)?;
-            trace!("Command spawned successfully");
-            let (mut stdout, mut stderr) = (
-                command.stdout.take().ok_or(Error::InnerError(
-                    "Command 'sh': stdout is not available".into(),
-                ))?,
-                command.stderr.take().ok_or(Error::InnerError(
-                    "Command 'sh': stderr is not available".into(),
-                ))?,
-            );
-            let exit_status = command.wait().await.map_err(Error::IOError)?;
-            trace!("Command finished with exit status: {exit_status}");
+                .arg("-s")
+                .arg("--")
+                .arg("-y")
+                .args(args)
+                .spawn()?;
+            debug!("Command spawned successfully");
+            command.stdin.as_mut().unwrap().write_all(shell.as_bytes()).await?;
+            debug!("write shell to stdin successfully");
+            let mut stdout = command.stdout.take().unwrap();
+            let mut stderr = command.stderr.take().unwrap();
+            let exit_status = command.wait().await?;
+            info!("Command finished with exit status: {exit_status}");
             let (mut stdout_buf, mut stderr_buf) = (Vec::new(), Vec::new());
-            stdout
-                .read_to_end(&mut stdout_buf)
-                .await
-                .map_err(Error::IOError)?;
-            stderr
-                .read_to_end(&mut stderr_buf)
-                .await
-                .map_err(Error::IOError)?;
+            stdout.read_to_end(&mut stdout_buf).await?;
+            stderr.read_to_end(&mut stderr_buf).await?;
             let (stdout_buf, stderr_buf) = (
                 OsString::from_vec(stdout_buf).to_string_lossy().into_owned(),
                 OsString::from_vec(stderr_buf).to_string_lossy().into_owned(),
@@ -405,7 +410,7 @@ impl crate::app::AppOper for Rustup {
             } else {
                 Err(Error::Failed {
                     exit_status,
-                    stdin: "".into(),
+                    stdin: shell.into(),
                     stdout: stdout_buf.into(),
                     stderr: stderr_buf.into(),
                 })
@@ -440,8 +445,7 @@ impl crate::app::AppOper for Rustup {
                     }
                 }
             }
-            .spawn()
-            .map_err(Error::IOError)?;
+            .spawn()?;
             trace!("Command spawned successfully");
             // let (mut stdout, mut stderr) = (
             //     command
@@ -453,13 +457,13 @@ impl crate::app::AppOper for Rustup {
             //         .take()
             //         .ok_or(Error::InnerError("Command 'rustup-init': stderr
             // is not available".into()))?, );
-            let exit_status = command.wait().await.map_err(Error::IOError)?;
+            let exit_status = command.wait().await?;
             trace!("Command finished with exit status: {exit_status}");
             let (mut stdout_buf, mut stderr_buf) = (Vec::new(), Vec::new());
             // stdout.read_to_end(&mut
-            // stdout_buf).await.map_err(Error::IOError)?;
+            // stdout_buf).await?;
             // stderr.read_to_end(&mut
-            // stderr_buf).await.map_err(Error::IOError)?;
+            // stderr_buf).await?;
             let (stdout_buf, stderr_buf) = (
                 unsafe { OsString::from_encoded_bytes_unchecked(stdout_buf) }
                     .to_string_lossy()

@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use algosul_derive::from_dir;
-use image::{imageops::FilterType, Rgb, Rgba};
+use image::{Rgb, Rgba, imageops::FilterType};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 from_dir!(pub mod assets from "rc" {
     text [include ["lang/*.toml"] exclude []];

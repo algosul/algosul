@@ -19,11 +19,6 @@ autoexamples = false
 name = "algosul"
 crate-type = ["rlib"]
 
-[[bin]]
-name = "algosul"
-path = "src/bin/main.rs"
-required-features = ["app-apps", "gtk4", "glib"]
-
 [[test]]
 name = "asset"
 path = "tests/asset.rs"
@@ -43,8 +38,6 @@ codegen = ["algosul-core/codegen"]
 
 deps = ["algosul-core/deps"]
 
-gtk4 = ["dep:gtk4"]
-glib = ["dep:glib"]
 macros = ["dep:algosul-derive"]
 
 [dependencies.image]
@@ -58,16 +51,6 @@ optional = true
 
 [dependencies.strfmt]
 version = "0.2.5"
-optional = true
-
-[dependencies.glib]
-version = "0.21.0"
-features = []
-optional = true
-
-[dependencies.gtk4]
-version = "0.10.0"
-features = ["v4_10"]
 optional = true
 
 [dependencies.env_logger]
