@@ -28,7 +28,7 @@ required-features = ["asset-image", "asset-text", "macros", "rayon"]
 default = ["app-apps", "asset"]
 
 app = []
-app-apps = ["app", "dep:tokio", "dep:reqwest"]
+app-apps = ["app", "dep:tokio", "dep:reqwest", "dep:regex"]
 
 asset = ["dep:toml"]
 asset-text = ["asset", "dep:strfmt", "dep:itertools"]
@@ -41,7 +41,7 @@ deps = ["algosul-core/deps"]
 macros = ["dep:algosul-derive"]
 
 [dependencies.image]
-version = "0.25"
+version = "0.25.6"
 features = ["serde"]
 optional = true
 
@@ -54,7 +54,7 @@ version = "0.2.5"
 optional = true
 
 [dependencies.env_logger]
-version = "0.11"
+version = "0.11.8"
 
 [dependencies.reqwest]
 version = "0.12.22"
@@ -62,11 +62,11 @@ features = ["blocking"]
 optional = true
 
 [dependencies.log]
-version = "0.4"
+version = "0.4.27"
 features = ["serde", "kv_serde"]
 
 [dependencies.toml]
-version = "0.9"
+version = "0.9.2"
 optional = true
 
 [dependencies.serde]
@@ -104,6 +104,11 @@ features = []
 
 [dependencies.itertools]
 version = "0.14.0"
+features = []
+optional = true
+
+[dependencies.regex]
+version = "1.11.1"
 features = []
 optional = true
 

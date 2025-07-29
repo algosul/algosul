@@ -39,6 +39,7 @@ dependencies = [
  "log",
  "proc-macro2",
  "rayon",
+ "regex",
  "reqwest",
  "serde",
  "strfmt",
