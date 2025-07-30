@@ -5,10 +5,7 @@
 //!     let rustup = tokio::runtime::Runtime::new()
 //!         .unwrap()
 //!         .block_on(async {
-//!             use algosul::app::{
-//!                 AppOper,
-//!                 apps::rust::{InstallInfo, Rustup},
-//!             };
+//!             use algosul::app::{AppOper, apps::rust::Rustup};
 //!             // install rustup
 //!             Rustup::install(InstallInfo::Default).await
 //!         })
@@ -31,3 +28,8 @@ pub mod macros;
 #[cfg(not(feature = "macros"))]
 pub(crate) mod macros;
 mod os;
+#[cfg(feature = "process")]
+pub mod process;
+#[cfg(not(feature = "process"))]
+pub(crate) mod process;
+pub mod utils;

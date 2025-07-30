@@ -1,7 +1,10 @@
 use std::{
     env,
     fmt::{Display, Formatter},
-    path::PathBuf,
+    fs::Permissions,
+    io::Write,
+    path::{Path, PathBuf},
+    time::SystemTime,
 };
 pub fn get_home_dir() -> super::Result<PathBuf> {
     env::home_dir().ok_or(super::Error::FailedToGetHomeDir)
@@ -51,12 +54,29 @@ impl Display for RustVersion<'_> {
         f.write_fmt(format_args!("{tool_name} {version} ({hash} {date})"))
     }
 }
-pub async fn download_rustup_init_sh() -> super::Result<String> {
+pub async fn dwld_rsinit_sh() -> super::Result<String> {
     let url = "https://sh.rustup.rs";
     let content = reqwest::get(url).await?.text().await?;
     Ok(content)
 }
-pub async fn download_rustup_init_exe(arch: &str) -> super::Result<Vec<u8>> {
+pub async fn dwld_rsinit_sh_and_save_plus_x(path: &Path) -> super::Result<()> {
+    if !path.exists()
+        || !path.is_file()
+        || (SystemTime::now()
+            .duration_since(path.metadata()?.modified()?)?
+            .as_secs()
+            >= 60 * 24)
+    {
+        std::fs::write(path, dwld_rsinit_sh().await?)?;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, Permissions::from_mode(0o755))?;
+    }
+    Ok(())
+}
+pub async fn dwld_rsinit_exe(arch: &str) -> super::Result<Vec<u8>> {
     let url = format!("https://win.rustup.rs/{arch}");
     let response = reqwest::get(url).await?;
     response

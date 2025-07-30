@@ -50,10 +50,18 @@ pub trait AppPath {
 /// application operators
 pub trait AppOper: Sized {
     type Error: std::error::Error + Send + Sync + 'static;
+    type Installer: crate::process::Process;
+    type Reinstaller: crate::process::Process;
+    type Remover: crate::process::Process;
+    type Updater: crate::process::Process;
     type InstallInfo;
     type ReinstallInfo;
     type RemoveInfo;
     type UpdateInfo;
+    async fn installer() -> Result<Self::Installer, Self::Error>;
+    async fn reinstaller(self) -> Result<Self::Reinstaller, Self::Error>;
+    async fn remover(self) -> Result<Self::Remover, Self::Error>;
+    async fn updater(self) -> Result<Self::Updater, Self::Error>;
     async fn install(info: Self::InstallInfo) -> Result<Self, Self::Error>;
     async fn reinstall(
         self, info: Self::ReinstallInfo,
