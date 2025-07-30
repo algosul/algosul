@@ -2,7 +2,6 @@ use std::{
     env,
     fmt::{Display, Formatter},
     fs::Permissions,
-    io::Write,
     path::{Path, PathBuf},
     time::SystemTime,
 };

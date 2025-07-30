@@ -1,3 +1,5 @@
+#![allow(async_fn_in_trait)]
+#![feature(string_from_utf8_lossy_owned)]
 //! #Example
 //! ```no_run
 //! #[cfg(feature = "app-apps")]
@@ -13,8 +15,6 @@
 //!     println!("Hello {rustup:#?}");
 //! }
 //! ```
-
-#![allow(async_fn_in_trait)]
 #[cfg(feature = "app")]
 pub mod app;
 #[cfg(feature = "asset")]

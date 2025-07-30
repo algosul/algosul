@@ -11,8 +11,17 @@ description.workspace = true
 readme.workspace = true
 
 [features]
+default = ["codegen"]
+full = [
+    "codegen",
+    "deps",
+]
 codegen = ["unicode-xid", "syn", "proc-macro2", "quote", "glob"]
 deps = []
+
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = []
 
 [dependencies.proc-macro2]
 version = "1.0.95"

@@ -26,6 +26,18 @@ required-features = ["asset-image", "asset-text", "macros", "rayon"]
 
 [features]
 default = ["app-apps", "asset"]
+full = [
+    "app-apps",
+    "asset",
+    "asset-text",
+    "asset-image",
+    "codegen",
+    "deps",
+    "macros",
+    "process",
+    "utils",
+    "utils-tokio"
+]
 
 app = []
 app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex"]
@@ -44,6 +56,10 @@ process = []
 
 utils = []
 utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
+
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = []
 
 [dependencies.image]
 version = "0.25.6"

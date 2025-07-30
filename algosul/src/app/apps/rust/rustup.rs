@@ -3,41 +3,25 @@ use std::{
     env,
     fmt::{Debug, Formatter},
     path::{Path, PathBuf},
-    process::Stdio,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-        Mutex,
-    },
+    process::{ExitStatus, Stdio},
+    sync::Mutex,
 };
 
-use bytes::BytesMut;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
-use tokio::{io::AsyncRead, process::Command, sync::RwLock};
+use tokio::process::Command;
 
+use super::{
+    utils,
+    utils::{dwld_rsinit_sh_and_save_plus_x, ToRustVersion},
+    HostTriple,
+    Profile,
+    Toolchain,
+};
 use crate::{
-    app::{
-        apps::{
-            rust,
-            rust::{
-                utils,
-                utils::{
-                    dwld_rsinit_sh,
-                    dwld_rsinit_sh_and_save_plus_x,
-                    ToRustVersion,
-                },
-                Error,
-                HostTriple,
-                Profile,
-                Toolchain,
-            },
-        },
-        AppLicense,
-        AppPath,
-    },
-    process::{Process, Status},
-    utils::tokio::AsyncBufReadExt,
+    app::{AppLicense, AppPath},
+    process::Process,
+    utils::tokio::TokioReadTaskExt,
 };
 #[derive(
     Default, Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize,
@@ -83,32 +67,32 @@ pub enum UpdateInfo {
     Default,
 }
 impl crate::app::AppInfo for Rustup {
-    type Error = Error;
+    type Error = super::Error;
 
     async fn name(&self) -> Cow<'_, str> { Cow::Borrowed("rustup") }
 
-    async fn license(&self) -> rust::Result<Cow<'_, AppLicense>> {
+    async fn license(&self) -> super::Result<Cow<'_, AppLicense>> {
         Ok(Cow::Owned(AppLicense::Or(
             Box::new(AppLicense::Text("Apache".to_string())),
             Box::new(AppLicense::Text("MIT".to_string())),
         )))
     }
 
-    async fn description(&self) -> rust::Result<Cow<'_, str>> { todo!() }
+    async fn description(&self) -> super::Result<Cow<'_, str>> { todo!() }
 
-    async fn documentation(&self) -> rust::Result<Cow<'_, str>> {
+    async fn documentation(&self) -> super::Result<Cow<'_, str>> {
         Ok(Cow::Borrowed("https://rust-lang.github.io/rustup/"))
     }
 
-    async fn homepage(&self) -> rust::Result<Cow<'_, str>> {
+    async fn homepage(&self) -> super::Result<Cow<'_, str>> {
         Ok(Cow::Borrowed("https://rustup.rs"))
     }
 
-    async fn repository(&self) -> rust::Result<Cow<'_, str>> {
+    async fn repository(&self) -> super::Result<Cow<'_, str>> {
         Ok(Cow::Borrowed("https://github.com/rust-lang/rustup/"))
     }
 
-    async fn version(&self) -> rust::Result<Cow<'_, str>> {
+    async fn version(&self) -> super::Result<Cow<'_, str>> {
         Ok(Cow::Owned(
             self.full_version_str()
                 .await?
@@ -119,35 +103,95 @@ impl crate::app::AppInfo for Rustup {
     }
 }
 impl AppPath for Rustup {
-    type Error = Error;
+    type Error = super::Error;
 
-    async fn home_path(&self) -> rust::Result<Cow<'_, Path>> {
+    async fn home_path(&self) -> super::Result<Cow<'_, Path>> {
         Ok(Cow::Borrowed(self.home_path.as_path()))
     }
 
-    async fn bin_path(&self) -> rust::Result<Cow<'_, Path>> {
+    async fn bin_path(&self) -> super::Result<Cow<'_, Path>> {
         Ok(Cow::Owned(self.home_path.join("bin/rustup")))
     }
 }
 type OnOutputFn = Box<dyn Fn(&[u8], &[u8]) + Send + Sync>;
+type OnStatusChangedFn<T> = Box<dyn Fn(&T) -> Result<(), super::Error> + Send>;
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum RustupInstallStatus {
+    Initial,
+    Downloading,
+    Downloaded,
+    Running,
+    OnExitStatus(ExitStatus),
+    Success,
+    Failed {
+        exit_status: ExitStatus,
+        stdout:      String,
+        stderr:      String,
+    },
+}
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum RustupReinstallStatus {
+    Initial,
+    RemoveStatus(RustupInstallStatus),
+    InstallStatus(RustupInstallStatus),
+    Success,
+    Failed {
+        exit_status: ExitStatus,
+        stdout:      String,
+        stderr:      String,
+    },
+}
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum RustupRemoveStatus {
+    Initial,
+    Running,
+    OnExitStatus(ExitStatus),
+    Success,
+    Failed {
+        exit_status: ExitStatus,
+        stdout:      String,
+        stderr:      String,
+    },
+}
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum RustupUpdateStatus {
+    Initial,
+    Running,
+    OnExitStatus(ExitStatus),
+    Success,
+    Failed {
+        exit_status: ExitStatus,
+        stdout:      String,
+        stderr:      String,
+    },
+}
 #[derive(Default)]
 pub struct RustupInstaller {
-    install_info: InstallInfo,
-    status:       RwLock<Status>,
-    on_stdout:    Mutex<Option<OnOutputFn>>,
-    on_stderr:    Mutex<Option<OnOutputFn>>,
+    install_info:      InstallInfo,
+    on_status_changed: Mutex<Option<OnStatusChangedFn<RustupInstallStatus>>>,
+    on_stdout:         Mutex<Option<OnOutputFn>>,
+    on_stderr:         Mutex<Option<OnOutputFn>>,
 }
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct RustupReinstaller {
-    reinstall_info: ReinstallInfo,
+    reinstall_info:    ReinstallInfo,
+    on_status_changed: Mutex<Option<OnStatusChangedFn<RustupReinstallStatus>>>,
+    on_stdout:         Mutex<Option<OnOutputFn>>,
+    on_stderr:         Mutex<Option<OnOutputFn>>,
 }
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct RustupRemover {
-    remove_info: RemoveInfo,
+    remove_info:       RemoveInfo,
+    on_status_changed: Mutex<Option<OnStatusChangedFn<RustupRemoveStatus>>>,
+    on_stdout:         Mutex<Option<OnOutputFn>>,
+    on_stderr:         Mutex<Option<OnOutputFn>>,
 }
-#[derive(Default, Debug)]
+#[derive(Default)]
 pub struct RustupUpdater {
-    update_info: UpdateInfo,
+    update_info:       UpdateInfo,
+    on_status_changed: Mutex<Option<OnStatusChangedFn<RustupUpdateStatus>>>,
+    on_stdout:         Mutex<Option<OnOutputFn>>,
+    on_stderr:         Mutex<Option<OnOutputFn>>,
 }
 impl RustupInstaller {
     pub fn set_install_info(&mut self, info: InstallInfo) -> &mut Self {
@@ -167,6 +211,15 @@ impl RustupInstaller {
     where F: Fn(&[u8], &[u8]) + Send + Sync + 'static {
         *self.on_stderr.try_lock().unwrap() = Some(Box::new(f));
         self
+    }
+
+    pub fn change_status(
+        &self, status: RustupInstallStatus,
+    ) -> Result<(), super::Error> {
+        if let Some(f) = self.on_status_changed.try_lock().unwrap().as_ref() {
+            f(&status)?;
+        }
+        Ok(())
     }
 }
 impl RustupReinstaller {
@@ -194,131 +247,118 @@ impl RustupUpdater {
     pub fn update_info(&self) -> &UpdateInfo { &self.update_info }
 }
 impl Process for RustupInstaller {
-    type Count = usize;
-    type Error = Error;
+    type Error = super::Error;
     type Output = Rustup;
+    type Status = RustupInstallStatus;
 
-    async fn run(&self) -> rust::Result<Self::Output> {
-        info!("Installing Rustup with info: {self:?}");
+    async fn run(&self) -> super::Result<Self::Output> {
+        self.change_status(RustupInstallStatus::Initial)?;
+        debug!("Installing Rustup with info: {self:?}");
         let path = env::temp_dir().join("rustup-init.sh");
+        self.change_status(RustupInstallStatus::Downloading)?;
         dwld_rsinit_sh_and_save_plus_x(&path).await?;
-        info!("Downloaded {path:?} successfully");
+        self.change_status(RustupInstallStatus::Downloaded)?;
+        info!("{path:?} has been successfully downloaded or cached");
         let mut child = Command::new(path)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .args(self.install_info.to_args())
             .spawn()?;
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
+        self.change_status(RustupInstallStatus::Running)?;
         debug!("Spawned command successfully, now reading stdout and stderr");
-        let on_stdout = self.on_stdout.try_lock().unwrap().take();
-        let on_stderr = self.on_stderr.try_lock().unwrap().take();
-        fn reader(
-            f: Option<OnOutputFn>,
-            mut read: impl AsyncRead + Unpin + Send + 'static,
-        ) -> tokio::task::JoinHandle<rust::Result<BytesMut>> {
-            if let Some(f) = f {
-                tokio::task::spawn(async move {
-                    read.read_to_end_with(|buf, new| f(buf, new)).await
-                })
-            } else {
-                tokio::task::spawn(async move {
-                    read.read_to_end_with(|_, _| {}).await
-                })
-            }
-        }
-        let stdout_task = reader(on_stdout, stdout);
-        let stderr_task = reader(on_stderr, stderr);
+        let stdout_task = child
+            .stdout
+            .take()
+            .unwrap()
+            .spawn_read_opt(self.on_stdout.try_lock().unwrap().take());
+        let stderr_task = child
+            .stderr
+            .take()
+            .unwrap()
+            .spawn_read_opt(self.on_stderr.try_lock().unwrap().take());
         let (stdout_buf, stderr_buf) =
             tokio::try_join!(stdout_task, stderr_task)?;
         debug!("Read stdout and stderr successfully");
         let exit_status = child.wait().await?;
+        self.change_status(RustupInstallStatus::OnExitStatus(exit_status))?;
         info!("Command finished with exit status: {exit_status}");
-        let (stdout_buf, stderr_buf) = (
-            String::from_utf8_lossy(&stdout_buf?).into_owned(),
-            String::from_utf8_lossy(&stderr_buf?).into_owned(),
-        );
-        info!("Command finished with stdout: \n{stdout_buf}");
-        info!("Command finished with stderr: \n{stderr_buf}");
+        let (stdout_buf, stderr_buf) = (stdout_buf?, stderr_buf?);
         if exit_status.success() {
+            self.change_status(RustupInstallStatus::Success)?;
             Ok(Rustup { home_path: utils::get_home_dir()?.join(".cargo/") })
         } else {
-            Err(Error::Failed {
+            self.change_status(RustupInstallStatus::Failed {
                 exit_status,
-                stdin: "".into(),
-                stdout: stdout_buf.into(),
-                stderr: stderr_buf.into(),
-            })
+                stdout: String::from_utf8_lossy_owned(stdout_buf.to_vec()),
+                stderr: String::from_utf8_lossy_owned(stderr_buf.to_vec()),
+            })?;
+            Err(super::Error::Failed(
+                "Rustup installation failed. For more, please use \
+                 on_status_changed."
+                    .into(),
+            ))
         }
     }
 
-    async fn overall_progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn status(&self) -> rust::Result<Status> {
-        Ok(*self.status.read().await)
-    }
-
-    fn try_status(&self) -> rust::Result<Status> {
-        Ok(*self.status.try_read()?)
+    fn on_status_changed(
+        &self,
+        f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
+    ) -> Result<(), Self::Error> {
+        *self.on_status_changed.try_lock().unwrap() = Some(Box::new(f));
+        Ok(())
     }
 }
 impl Process for RustupReinstaller {
-    type Count = usize;
-    type Error = Error;
+    type Error = super::Error;
     type Output = Rustup;
+    type Status = RustupReinstallStatus;
 
-    async fn run(&self) -> rust::Result<Self::Output> { todo!() }
+    async fn run(&self) -> super::Result<Self::Output> { todo!() }
 
-    async fn overall_progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn status(&self) -> rust::Result<Status> { todo!() }
-
-    fn try_status(&self) -> rust::Result<Status> { todo!() }
+    fn on_status_changed(
+        &self,
+        f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
+    ) -> Result<(), Self::Error> {
+        *self.on_status_changed.try_lock().unwrap() = Some(Box::new(f));
+        Ok(())
+    }
 }
 impl Process for RustupRemover {
-    type Count = usize;
-    type Error = Error;
+    type Error = super::Error;
     type Output = ();
+    type Status = RustupRemoveStatus;
 
-    async fn run(&self) -> rust::Result<Self::Output> { todo!() }
+    async fn run(&self) -> super::Result<Self::Output> { todo!() }
 
-    async fn overall_progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn status(&self) -> rust::Result<Status> { todo!() }
-
-    fn try_status(&self) -> rust::Result<Status> { todo!() }
+    fn on_status_changed(
+        &self,
+        f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
+    ) -> Result<(), Self::Error> {
+        *self.on_status_changed.try_lock().unwrap() = Some(Box::new(f));
+        Ok(())
+    }
 }
 impl Process for RustupUpdater {
-    type Count = usize;
-    type Error = Error;
+    type Error = super::Error;
     type Output = ();
+    type Status = RustupUpdateStatus;
 
-    async fn run(&self) -> rust::Result<Self::Output> { todo!() }
+    async fn run(&self) -> super::Result<Self::Output> { todo!() }
 
-    async fn overall_progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn progress(&self) -> rust::Result<Self::Count> { todo!() }
-
-    async fn status(&self) -> rust::Result<Status> { todo!() }
-
-    fn try_status(&self) -> rust::Result<Status> { todo!() }
+    fn on_status_changed(
+        &self,
+        f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
+    ) -> Result<(), Self::Error> {
+        *self.on_status_changed.try_lock().unwrap() = Some(Box::new(f));
+        Ok(())
+    }
 }
 impl crate::app::AppOper for Rustup {
-    type Error = Error;
-    type InstallInfo = InstallInfo;
+    type Error = super::Error;
     type Installer = RustupInstaller;
-    type ReinstallInfo = ();
     type Reinstaller = RustupReinstaller;
-    type RemoveInfo = ();
     type Remover = RustupRemover;
-    type UpdateInfo = ();
     type Updater = RustupUpdater;
 
     async fn installer() -> Result<Self::Installer, Self::Error> {
@@ -335,90 +375,6 @@ impl crate::app::AppOper for Rustup {
 
     async fn updater(self) -> Result<Self::Updater, Self::Error> {
         Ok(Self::Updater::default())
-    }
-
-    #[cfg(unix)]
-    async fn install(info: Self::InstallInfo) -> rust::Result<Self> {
-        use std::{ffi::OsString, os::unix::ffi::OsStringExt, process::Stdio};
-
-        use log::{debug, info, warn};
-        use tokio::{
-            io::{AsyncBufReadExt, AsyncRead, AsyncWriteExt, BufReader},
-            process::Command,
-        };
-
-        use crate::app::apps::rust::utils;
-        debug!("Installing Rustup with info: {info:?}");
-        let shell = dwld_rsinit_sh().await?;
-        info!("Downloaded rustup-init.sh successfully");
-        let args = info.to_args();
-        debug!("Shell args: {args:?}");
-        let mut command = Command::new("/bin/sh")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .arg("-s")
-            .arg("--")
-            .args(args)
-            .spawn()?;
-        debug!("Command spawned successfully");
-        command.stdin.as_mut().unwrap().write_all(shell.as_bytes()).await?;
-        debug!("write shell to stdin successfully");
-        let stdout = command.stdout.take().unwrap();
-        let stderr = command.stderr.take().unwrap();
-        async fn read_and_print(
-            prefix: &str, reader: impl AsyncRead + Unpin + Send + 'static,
-        ) -> Vec<u8> {
-            let mut lines = BufReader::new(reader).lines();
-            let mut out = Vec::new();
-            // TODO: 不会结束
-            while let Ok(Some(line)) = lines.next_line().await {
-                out.write_all(line.as_ref()).await.unwrap();
-                info!("[{prefix}] {line}");
-            }
-            out
-        }
-        let stdout_task = tokio::spawn(read_and_print("stdout", stdout));
-        let stderr_task = tokio::spawn(read_and_print("stderr", stderr));
-        let (stdout_buf, stderr_buf) =
-            tokio::try_join!(stdout_task, stderr_task,)?;
-        let (stdout_buf, stderr_buf) = (
-            OsString::from_vec(stdout_buf).to_string_lossy().into_owned(),
-            OsString::from_vec(stderr_buf).to_string_lossy().into_owned(),
-        );
-        // TODO: 不会执行
-        let exit_status = command.wait().await?;
-        info!("Command finished with exit status: {exit_status}");
-        info!("Command finished with stdout: \n{stdout_buf}");
-        warn!("Command finished with stderr: \n{stderr_buf}");
-        if exit_status.success() {
-            Ok(Self {
-                // ~/.cargo
-                home_path: utils::get_home_dir()?.join(".cargo"),
-            })
-        } else {
-            Err(Error::Failed {
-                exit_status,
-                stdin: shell.into(),
-                stdout: stdout_buf.into(),
-                stderr: stderr_buf.into(),
-            })
-        }
-    }
-
-    #[cfg(windows)]
-    async fn install(info: Self::InstallInfo) -> rust::Result<Self> { todo!() }
-
-    async fn reinstall(self, _info: Self::ReinstallInfo) -> rust::Result<Self> {
-        todo!()
-    }
-
-    async fn remove(self, _info: Self::RemoveInfo) -> rust::Result<()> {
-        todo!()
-    }
-
-    async fn update(self, _info: Self::UpdateInfo) -> rust::Result<Self> {
-        todo!()
     }
 }
 impl InstallInfo {
@@ -460,15 +416,15 @@ impl Default for InstallCustomInfo {
     }
 }
 impl Rustup {
-    pub async fn get_by_current_user() -> rust::Result<Self> {
+    pub async fn get_by_current_user() -> super::Result<Self> {
         Ok(Self { home_path: utils::get_home_dir()?.join(".cargo/") })
     }
 
-    pub async fn to_command(&self) -> rust::Result<Command> {
+    pub async fn to_command(&self) -> super::Result<Command> {
         Ok(Command::new(self.bin_path().await?.as_ref()))
     }
 
-    pub async fn full_version_str(&self) -> rust::Result<String> {
+    pub async fn full_version_str(&self) -> super::Result<String> {
         let version = String::from_utf8(
             self.to_command()
                 .await?
@@ -487,7 +443,51 @@ impl Debug for RustupInstaller {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RustupInstaller")
             .field("install_info", &self.install_info)
-            .field("status", &self.status)
+            .field(
+                "on_status_changed",
+                &self.on_status_changed.lock().unwrap().is_some(),
+            )
+            .field("on_stdout", &self.on_stdout.lock().unwrap().is_some())
+            .field("on_stderr", &self.on_stderr.lock().unwrap().is_some())
+            .finish()
+    }
+}
+impl Debug for RustupReinstaller {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RustupReinstaller")
+            .field("reinstall_info", &self.reinstall_info)
+            .field(
+                "on_status_changed",
+                &self.on_status_changed.lock().unwrap().is_some(),
+            )
+            .field("on_stdout", &self.on_stdout.lock().unwrap().is_some())
+            .field("on_stderr", &self.on_stderr.lock().unwrap().is_some())
+            .finish()
+    }
+}
+impl Debug for RustupRemover {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RustupRemover")
+            .field("remove_info", &self.remove_info)
+            .field(
+                "on_status_changed",
+                &self.on_status_changed.lock().unwrap().is_some(),
+            )
+            .field("on_stdout", &self.on_stdout.lock().unwrap().is_some())
+            .field("on_stderr", &self.on_stderr.lock().unwrap().is_some())
+            .finish()
+    }
+}
+impl Debug for RustupUpdater {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RustupUpdater")
+            .field("update_info", &self.update_info)
+            .field(
+                "on_status_changed",
+                &self.on_status_changed.lock().unwrap().is_some(),
+            )
+            .field("on_stdout", &self.on_stdout.lock().unwrap().is_some())
+            .field("on_stderr", &self.on_stderr.lock().unwrap().is_some())
             .finish()
     }
 }

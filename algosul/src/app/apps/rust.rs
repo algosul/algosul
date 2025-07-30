@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
     io,
-    process::ExitStatus,
     str::FromStr,
     string::FromUtf8Error,
     time::SystemTimeError,
@@ -17,14 +16,9 @@ pub use rustup::Rustup;
 pub enum Error {
     Unsupported(Cow<'static, str>),
     IOError(io::Error),
-    TaskJoinError(tokio::task::JoinError),
+    TaskJoinError(JoinError),
     InnerError(Cow<'static, str>),
-    Failed {
-        exit_status: ExitStatus,
-        stdin:       Cow<'static, str>,
-        stdout:      Cow<'static, str>,
-        stderr:      Cow<'static, str>,
-    },
+    Failed(Cow<'static, str>),
     FailedToGetHomeDir,
     RequestError(reqwest::Error),
     FromUtf8Error(FromUtf8Error),
@@ -166,12 +160,7 @@ impl Display for Error {
             Error::InnerError(info) => {
                 f.write_fmt(format_args!("Inner error: {info}"))
             }
-            Error::Failed { exit_status, stdin, stdout, stderr } => f
-                .write_fmt(format_args!(
-                    "Failed:\n - exit status: {exit_status}\n - \
-                     stdin:\n{stdin}\n\n - stdout:\n{stdout}\n\n - \
-                     stderr:\n{stderr}"
-                )),
+            Error::Failed(info) => f.write_fmt(format_args!("Failed: {info}")),
             Error::FailedToGetHomeDir => {
                 f.write_fmt(format_args!("failed to get HOME dir"))
             }
@@ -247,7 +236,17 @@ mod tests {
     async fn install_rustup()
     -> std::result::Result<(), Box<dyn std::error::Error>> {
         env_logger::init();
-        Rustup::installer().await?.run().await?;
+        let installer = Rustup::installer().await?;
+        installer.on_status_changed(|status| {
+            info!("status: {status:?}");
+            Ok(())
+        })?;
+        let rustup = installer.run().await?;
+        info!("rustup installed: {rustup:?}");
+        let version = rustup.full_version_str().await?;
+        info!("version: {version:?}");
+        let version = version.to_rust_version()?;
+        info!("parsed version: {version:?}");
         Ok::<_, Box<dyn std::error::Error>>(())
     }
     #[tokio::test]

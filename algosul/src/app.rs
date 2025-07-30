@@ -30,7 +30,7 @@ pub enum AppLicense {
 }
 /// application information
 pub trait AppInfo {
-    type Error: std::error::Error + Send + Sync + 'static;
+    type Error: std::error::Error;
     async fn name(&self) -> Cow<'_, str>;
     async fn license(&self) -> Result<Cow<'_, AppLicense>, Self::Error>;
     async fn description(&self) -> Result<Cow<'_, str>, Self::Error>;
@@ -41,7 +41,7 @@ pub trait AppInfo {
 }
 /// about the application paths
 pub trait AppPath {
-    type Error: std::error::Error + Send + Sync + 'static;
+    type Error: std::error::Error;
     /// e.g. '~/.cargo/'
     async fn home_path(&self) -> Result<Cow<'_, Path>, Self::Error>;
     /// e.g. '~/.cargo/bin/rustup'
@@ -49,25 +49,15 @@ pub trait AppPath {
 }
 /// application operators
 pub trait AppOper: Sized {
-    type Error: std::error::Error + Send + Sync + 'static;
+    type Error: std::error::Error;
     type Installer: crate::process::Process;
     type Reinstaller: crate::process::Process;
     type Remover: crate::process::Process;
     type Updater: crate::process::Process;
-    type InstallInfo;
-    type ReinstallInfo;
-    type RemoveInfo;
-    type UpdateInfo;
     async fn installer() -> Result<Self::Installer, Self::Error>;
     async fn reinstaller(self) -> Result<Self::Reinstaller, Self::Error>;
     async fn remover(self) -> Result<Self::Remover, Self::Error>;
     async fn updater(self) -> Result<Self::Updater, Self::Error>;
-    async fn install(info: Self::InstallInfo) -> Result<Self, Self::Error>;
-    async fn reinstall(
-        self, info: Self::ReinstallInfo,
-    ) -> Result<Self, Self::Error>;
-    async fn remove(self, info: Self::RemoveInfo) -> Result<(), Self::Error>;
-    async fn update(self, info: Self::UpdateInfo) -> Result<Self, Self::Error>;
 }
 impl Display for AppLicense {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
