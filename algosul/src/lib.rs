@@ -1,18 +1,24 @@
 #![allow(async_fn_in_trait)]
 #![feature(string_from_utf8_lossy_owned)]
 //! #Example
-//! ```no_run
-//! #[cfg(feature = "app-apps")]
-//! {
-//!     let rustup = tokio::runtime::Runtime::new()
-//!         .unwrap()
-//!         .block_on(async {
-//!             use algosul::app::{AppOper, apps::rust::Rustup};
-//!             // install rustup
-//!             Rustup::install(InstallInfo::Default).await
-//!         })
-//!         .unwrap();
-//!     println!("Hello {rustup:#?}");
+//! ```
+//! use algosul::{
+//!   app::{
+//!     AppOper,
+//!     apps::rust::{Result, Rustup},
+//!   },
+//!   process::Process,
+//! };
+//! #[tokio::main]
+//! async fn main() -> Result<()> {
+//!   let mut installer = Rustup::installer().await?;
+//!   installer.on_status_changed(|status| {
+//!     println!("status: {status:?}");
+//!     Ok(())
+//!   })?;
+//!   let rustup = installer.run().await?;
+//!   println!("rustup installed: {rustup:?}");
+//!   Ok(())
 //! }
 //! ```
 #[cfg(feature = "app")]

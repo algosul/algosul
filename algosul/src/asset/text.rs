@@ -4,27 +4,27 @@ use serde::{Deserialize, Serialize};
 use strfmt::FmtError;
 #[derive(Debug)]
 pub enum Error {
-    /// format parameters mismatch
-    FormatParameterMismatch(String),
-    /// usually format string error
-    FormatError(FmtError),
+  /// format parameters mismatch
+  FormatParameterMismatch(String),
+  /// usually format string error
+  FormatError(FmtError),
 }
 pub type Result<T> = std::result::Result<T, Error>;
 pub type Text = String;
 #[derive(
-    Default,
-    Debug,
-    Clone,
-    Eq,
-    PartialEq,
-    Ord,
-    PartialOrd,
-    Hash,
-    Serialize,
-    Deserialize,
+  Default,
+  Debug,
+  Clone,
+  Eq,
+  PartialEq,
+  Ord,
+  PartialOrd,
+  Hash,
+  Serialize,
+  Deserialize,
 )]
 pub struct FormatText {
-    fmt: Text,
+  fmt: Text,
 }
 // impl FormatText {
 //     fn invalid_key_error(&self, key: &str) -> Error {
@@ -91,25 +91,25 @@ pub struct FormatText {
 //     }
 // }
 impl Display for Error {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::FormatParameterMismatch(message) => f.write_fmt(
-                format_args!("Format parameter mismatch: {message}"),
-            ),
-            Error::FormatError(err) => {
-                f.write_fmt(format_args!("format error: {err}"))
-            }
-        }
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Error::FormatParameterMismatch(message) => {
+        f.write_fmt(format_args!("Format parameter mismatch: {message}"))
+      }
+      Error::FormatError(err) => {
+        f.write_fmt(format_args!("format error: {err}"))
+      }
     }
+  }
 }
 impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Error::FormatParameterMismatch(_) => None,
-            Error::FormatError(err) => Some(err),
-        }
+  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    match self {
+      Error::FormatParameterMismatch(_) => None,
+      Error::FormatError(err) => Some(err),
     }
+  }
 }
 impl From<strfmt::FmtError> for Error {
-    fn from(value: strfmt::FmtError) -> Self { Self::FormatError(value) }
+  fn from(value: strfmt::FmtError) -> Self { Self::FormatError(value) }
 }

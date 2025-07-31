@@ -27,20 +27,22 @@ required-features = ["asset-image", "asset-text", "macros", "rayon"]
 [features]
 default = ["app-apps", "asset"]
 full = [
+    "app",
     "app-apps",
     "asset",
     "asset-text",
     "asset-image",
     "codegen",
     "deps",
+    "deps-thiserror",
     "macros",
     "process",
     "utils",
-    "utils-tokio"
+    "utils-tokio",
 ]
 
-app = []
-app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex"]
+app = ["process"]
+app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex", "deps-thiserror"]
 
 asset = ["dep:toml"]
 asset-text = ["asset", "dep:strfmt", "dep:itertools"]
@@ -49,6 +51,7 @@ asset-image = ["asset", "dep:image"]
 codegen = ["algosul-core/codegen"]
 
 deps = ["algosul-core/deps"]
+deps-thiserror = ["dep:thiserror"]
 
 macros = ["dep:algosul-derive"]
 
@@ -135,6 +138,11 @@ optional = true
 
 [dependencies.regex]
 version = "1.11.1"
+features = []
+optional = true
+
+[dependencies.thiserror]
+version = "1.0.31"
 features = []
 optional = true
 

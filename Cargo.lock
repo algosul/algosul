@@ -46,6 +46,7 @@ dependencies = [
  "strfmt",
  "syn",
  "sys-locale",
+ "thiserror",
  "tokio",
  "toml 0.9.2",
 ]
