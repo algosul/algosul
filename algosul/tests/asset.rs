@@ -8,7 +8,8 @@ from_dir!(pub mod assets from "rc" {
     binary [include ["images/*.png"] exclude []];
 });
 #[test]
-fn main() {
+fn main()
+{
   let locale = assets::lang::en_US;
   println!("{locale}");
   let image = image::load_from_memory(assets::images::_0).unwrap();
@@ -20,11 +21,15 @@ fn main() {
     .par_bridge()
     .map(|y| {
       let mut buffer = String::new();
-      for x in 0..width {
+      for x in 0..width
+      {
         let top = image.get_pixel(x, y);
-        let bottom = if y + 1 < height {
+        let bottom = if y + 1 < height
+        {
           image.get_pixel(x, y + 1)
-        } else {
+        }
+        else
+        {
           &Rgba([0, 0, 0, 0])
         };
         write!(

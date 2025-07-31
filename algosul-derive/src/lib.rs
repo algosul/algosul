@@ -31,7 +31,8 @@ mod from_dir;
 /// println!("zh-CN.toml: {}", assets::lang::zh_CN);
 /// ```
 #[proc_macro]
-pub fn from_dir(input: TokenStream) -> TokenStream {
+pub fn from_dir(input: TokenStream) -> TokenStream
+{
   let _ = env_logger::try_init();
   let path = proc_macro::Span::call_site().local_file().unwrap();
   let base = path.parent().unwrap();

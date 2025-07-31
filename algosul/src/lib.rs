@@ -10,7 +10,8 @@
 //!   process::Process,
 //! };
 //! #[tokio::main]
-//! async fn main() -> Result<()> {
+//! async fn main() -> Result<()>
+//! {
 //!   let mut installer = Rustup::installer().await?;
 //!   installer.on_status_changed(|status| {
 //!     println!("status: {status:?}");
