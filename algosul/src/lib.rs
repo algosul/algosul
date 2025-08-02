@@ -1,26 +1,42 @@
+#![allow(async_fn_in_trait)]
+#![feature(string_from_utf8_lossy_owned)]
 //! #Example
-//! ```no_run
-//! #[cfg(feature = "app-apps")]
+//! ```
+//! use algosul::{
+//!   app::{
+//!     AppOper,
+//!     apps::rust::{Result, Rustup},
+//!   },
+//!   process::Process,
+//! };
+//! #[tokio::main]
+//! async fn main() -> Result<()>
 //! {
-//!     let rustup = tokio::runtime::Runtime::new()
-//!         .unwrap()
-//!         .block_on(async {
-//!             use algosul::app::{
-//!                 AppOper,
-//!                 apps::rust::{InstallInfo, Rustup},
-//!             };
-//!             // install rustup
-//!             Rustup::install(InstallInfo::Default).await
-//!         })
-//!         .unwrap();
-//!     println!("Hello {rustup:#?}");
+//!   let mut installer = Rustup::installer().await?;
+//!   installer.on_status_changed(|status| {
+//!     println!("status: {status:?}");
+//!     Ok(())
+//!   })?;
+//!   let rustup = installer.run().await?;
+//!   println!("rustup installed: {rustup:?}");
+//!   Ok(())
 //! }
 //! ```
-
-#![allow(async_fn_in_trait)]
-#[cfg(any(doc, feature = "app"))]
+#[cfg(feature = "app")]
 pub mod app;
-#[cfg(any(doc, feature = "i18n"))]
-pub mod i18n;
-mod marco;
-mod os_impl;
+#[cfg(feature = "asset")]
+pub mod asset;
+#[cfg(feature = "codegen")]
+pub mod codegen;
+#[cfg(feature = "deps")]
+pub mod deps;
+#[cfg(feature = "macros")]
+pub mod macros;
+#[cfg(not(feature = "macros"))]
+pub(crate) mod macros;
+mod os;
+#[cfg(feature = "process")]
+pub mod process;
+#[cfg(not(feature = "process"))]
+pub(crate) mod process;
+pub mod utils;

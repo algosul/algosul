@@ -11,10 +11,36 @@ description.workspace = true
 readme.workspace = true
 
 [features]
-i18n = ["serde", "toml", "strfmt", "sys-locale"]
+default = ["codegen"]
+full = [
+    "codegen",
+    "deps",
+]
+codegen = ["unicode-xid", "syn", "proc-macro2", "quote", "glob"]
+deps = []
 
-[dependencies]
-serde = { version = "1.*", features = ["derive"], optional = true }
-toml = { version = "0.8.23", features = ["parse", "display"], optional = true }
-strfmt = { version = "*", optional = true }
-sys-locale = { version = "0.3.2", optional = true }
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = []
+
+[dependencies.proc-macro2]
+version = "1.0.95"
+optional = true
+
+[dependencies.quote]
+version = "1.0.40"
+optional = true
+
+[dependencies.syn]
+version = "2.0.104"
+features = ["full"]
+optional = true
+
+[dependencies.unicode-xid]
+version = "0.2.6"
+optional = true
+
+[dependencies.glob]
+version = "0.3.2"
+features = []
+optional = true
