@@ -4,9 +4,6 @@ on:
   pull_request:
     branches: [ release ]
 
-permissions:
-  contents: write
-
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
@@ -21,7 +18,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           profile: minimal
           components: rustfmt
 
