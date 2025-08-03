@@ -17,7 +17,7 @@ pub struct RustVersion<'a>
 {
   pub tool_name: &'a str,
   pub version:   &'a str,
-  pub hash:      &'a str,
+  pub hash:      Option<&'a str>,
   pub date:      &'a str,
 }
 pub mod regexs
@@ -27,11 +27,13 @@ pub mod regexs
   use regex::Regex;
   pub const TOOL_NAME: &str = r"(.+)";
   pub const VERSION: &str = r"([\w.\-]+)";
-  pub const HASH: &str = r"([a-f0-9]+)";
-  pub const DATE: &str = r"(\d{4}-\d{2}-\d{2})";
+  pub const HASH: &str = r"(?P<hash>[a-f0-9]+)";
+  pub const DATE: &str = r"(?P<date>\d{4}-\d{2}-\d{2})";
   pub static RUST_VERSION: LazyLock<Result<Regex, regex::Error>> =
     LazyLock::new(|| {
-      Regex::new(&format!(r"{TOOL_NAME}\s+{VERSION}\s+\({HASH}\s+{DATE}\)"))
+      Regex::new(&format!(
+        r"{TOOL_NAME}\s+{VERSION}\s+\((?:{HASH}\s+)?{DATE}\)"
+      ))
     });
 }
 pub trait ToRustVersion
@@ -49,8 +51,8 @@ impl ToRustVersion for String
     Ok(RustVersion {
       tool_name: captures.get(1).unwrap().as_str(),
       version:   captures.get(2).unwrap().as_str(),
-      hash:      captures.get(3).unwrap().as_str(),
-      date:      captures.get(4).unwrap().as_str(),
+      hash:      captures.name("hash").map(|m| m.as_str()),
+      date:      captures.name("date").unwrap().as_str(),
     })
   }
 }
@@ -59,7 +61,14 @@ impl Display for RustVersion<'_>
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
   {
     let RustVersion { tool_name, version, hash, date } = self;
-    f.write_fmt(format_args!("{tool_name} {version} ({hash} {date})"))
+    if let Some(hash) = hash
+    {
+      f.write_fmt(format_args!("{tool_name} {version} ({hash} {date})"))
+    }
+    else
+    {
+      f.write_fmt(format_args!("{tool_name} {version} ({date})"))
+    }
   }
 }
 pub async fn dwld_rsinit_sh() -> super::Result<String>
@@ -104,7 +113,7 @@ mod tests
     assert_eq!(version, RustVersion {
       tool_name: "rustup",
       version:   "1.28.2",
-      hash:      "e4f3ad6f8",
+      hash:      Some("e4f3ad6f8"),
       date:      "2025-04-28",
     });
   }

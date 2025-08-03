@@ -6,7 +6,7 @@ use crate::from_dir::InputBuf;
 mod from_dir;
 /// Convert from folder to module
 /// # Grammar
-/// ```ignore
+/// ```text
 /// // use
 /// from_dir!($module)
 /// // $module
