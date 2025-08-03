@@ -116,5 +116,14 @@ mod tests
       hash:      Some("e4f3ad6f8"),
       date:      "2025-04-28",
     });
+
+    let version = "rustup 1.28.2 (2025-04-28)".to_string();
+    let version = version.to_rust_version().unwrap();
+    assert_eq!(version, RustVersion {
+      tool_name: "rustup",
+      version:   "1.28.2",
+      hash:      None,
+      date:      "2025-04-28",
+    });
   }
 }
