@@ -29,10 +29,22 @@ jobs:
           target: x86_64-unknown-linux-gnu
 
       - name: Build
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: trace
         run: |
           cargo build --verbose
 
       - name: Run tests
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: trace
         run: |
-          cargo test --verbose
+          cargo test --all-features --verbose -- --nocapture
+      - name: Run ignore tests
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: trace
+        run: |
+          cargo test --all-features --verbose -- --ignored --nocapture
 

@@ -14,7 +14,8 @@ pub mod rustup;
 pub mod utils;
 pub use rustup::Rustup;
 #[derive(Debug, Error)]
-pub enum Error {
+pub enum Error
+{
   #[error("Unsupported: {0}")]
   Unsupported(Cow<'static, str>),
   #[error("IO error: {0}")]
@@ -39,6 +40,8 @@ pub enum Error {
   TryLockError(#[from] TryLockError),
   #[error("System time error: {0}")]
   SystemTimeError(#[from] SystemTimeError),
+  #[error("Invalid rustup-init.sh content")]
+  InvalidRsinitShContent,
 }
 pub type Result<T> = std::result::Result<T, Error>;
 #[derive(
@@ -54,7 +57,8 @@ pub type Result<T> = std::result::Result<T, Error>;
   Serialize,
   Deserialize,
 )]
-pub enum Toolchain {
+pub enum Toolchain
+{
   #[default]
   Stable,
   Beta,
@@ -73,7 +77,8 @@ pub enum Toolchain {
   Serialize,
   Deserialize,
 )]
-pub enum HostTriple {
+pub enum HostTriple
+{
   #[default]
   Host,
   /// e.g. x86_64-unknown-linux-gnu
@@ -92,15 +97,19 @@ pub enum HostTriple {
   Serialize,
   Deserialize,
 )]
-pub enum Profile {
+pub enum Profile
+{
   Minimal,
   #[default]
   Default,
   Complete,
 }
-impl Display for Toolchain {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
+impl Display for Toolchain
+{
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
+  {
+    match self
+    {
       Toolchain::Stable => f.write_str("stable"),
       Toolchain::Beta => f.write_str("beta"),
       Toolchain::Nightly => f.write_str("nightly"),
@@ -108,11 +117,14 @@ impl Display for Toolchain {
     }
   }
 }
-impl FromStr for Toolchain {
+impl FromStr for Toolchain
+{
   type Err = ();
 
-  fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-    match s {
+  fn from_str(s: &str) -> std::result::Result<Self, Self::Err>
+  {
+    match s
+    {
       "stable" => Ok(Toolchain::Stable),
       "beta" => Ok(Toolchain::Beta),
       "nightly" => Ok(Toolchain::Nightly),
@@ -121,38 +133,50 @@ impl FromStr for Toolchain {
     }
   }
 }
-impl Display for HostTriple {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
+impl Display for HostTriple
+{
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
+  {
+    match self
+    {
       HostTriple::Host => f.write_str("host"),
       HostTriple::Target(target) => f.write_str(target),
     }
   }
 }
-impl FromStr for HostTriple {
+impl FromStr for HostTriple
+{
   type Err = ();
 
-  fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-    match s {
+  fn from_str(s: &str) -> std::result::Result<Self, Self::Err>
+  {
+    match s
+    {
       "host" => Ok(HostTriple::Host),
       s => Ok(HostTriple::Target(s.to_string())),
     }
   }
 }
-impl Display for Profile {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
+impl Display for Profile
+{
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
+  {
+    match self
+    {
       Profile::Minimal => f.write_str("minimal"),
       Profile::Default => f.write_str("default"),
       Profile::Complete => f.write_str("complete"),
     }
   }
 }
-impl FromStr for Profile {
+impl FromStr for Profile
+{
   type Err = ();
 
-  fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-    match s {
+  fn from_str(s: &str) -> std::result::Result<Self, Self::Err>
+  {
+    match s
+    {
       "minimal" => Ok(Profile::Minimal),
       "default" => Ok(Profile::Default),
       "complete" => Ok(Profile::Complete),
@@ -161,7 +185,8 @@ impl FromStr for Profile {
   }
 }
 #[cfg(test)]
-mod tests {
+mod tests
+{
   use log::info;
   use utils::ToRustVersion;
 
@@ -170,7 +195,8 @@ mod tests {
   #[tokio::test]
   #[ignore]
   async fn install_rustup()
-  -> std::result::Result<(), Box<dyn std::error::Error>> {
+  -> std::result::Result<(), Box<dyn std::error::Error>>
+  {
     env_logger::init();
     let mut installer = Rustup::installer().await?;
     installer.on_status_changed(|status| {
@@ -187,7 +213,8 @@ mod tests {
   }
   #[tokio::test]
   async fn rustup_version()
-  -> std::result::Result<(), Box<dyn std::error::Error>> {
+  -> std::result::Result<(), Box<dyn std::error::Error>>
+  {
     env_logger::init();
     let rustup = Rustup::get_by_current_user().await?;
     let version = rustup.full_version_str().await?;

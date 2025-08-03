@@ -577,26 +577,18 @@ impl Rustup
 
   pub async fn full_version_str(&self) -> super::Result<String>
   {
-    for line in String::from_utf8(
-      self
-        .to_command()
-        .await?
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .arg("--version")
-        .output()
-        .await?
-        .stdout,
-    )?
-    .lines()
-    {
-      if line.trim().starts_with("rustup ")
-      {
-        return Ok(line.to_string());
-      }
-    }
-    Err(super::Error::Unsupported("Could not get Rustup version".into()))
+    let out = self
+      .to_command()
+      .await?
+      .stdin(Stdio::null())
+      .stdout(Stdio::piped())
+      .stderr(Stdio::piped())
+      .arg("--version")
+      .output()
+      .await?
+      .stdout;
+    let version = String::from_utf8(out)?;
+    Ok(version)
   }
 }
 impl Debug for RustupInstaller
