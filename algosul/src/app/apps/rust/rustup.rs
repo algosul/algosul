@@ -577,7 +577,7 @@ impl Rustup
 
   pub async fn full_version_str(&self) -> super::Result<String>
   {
-    let version = String::from_utf8(
+    for line in String::from_utf8(
       self
         .to_command()
         .await?
@@ -588,8 +588,15 @@ impl Rustup
         .output()
         .await?
         .stdout,
-    )?;
-    Ok(version)
+    )?
+    .lines()
+    {
+      if line.trim().starts_with("rustup ")
+      {
+        return Ok(line.to_string());
+      }
+    }
+    Err(super::Error::Unsupported("Could not get Rustup version".into()))
   }
 }
 impl Debug for RustupInstaller
