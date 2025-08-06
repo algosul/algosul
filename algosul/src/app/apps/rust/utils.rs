@@ -38,7 +38,7 @@ pub mod regexs
 }
 pub trait ToRustVersion
 {
-  fn to_rust_version(&self) -> super::Result<RustVersion>;
+  fn to_rust_version(&'_ self) -> super::Result<RustVersion<'_>>;
 }
 impl ToRustVersion for String
 {
