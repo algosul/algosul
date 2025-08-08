@@ -57,7 +57,7 @@ macros = ["dep:algosul-derive"]
 
 process = []
 
-utils = []
+utils = ["dep:rfd"]
 utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
 
 [package.metadata.docs.rs]
@@ -144,6 +144,10 @@ optional = true
 [dependencies.thiserror]
 version = "1.0.31"
 features = []
+optional = true
+
+[dependencies.rfd]
+version = "0.15.4"
 optional = true
 
 [build-dependencies.algosul-core]
