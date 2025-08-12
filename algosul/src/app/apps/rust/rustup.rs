@@ -4,6 +4,7 @@ use std::{
   fmt::{Debug, Formatter},
   path::{Path, PathBuf},
   process::{ExitStatus, Stdio},
+  sync::Arc,
 };
 
 use log::{debug, info};
@@ -18,16 +19,15 @@ use super::{
   Toolchain,
 };
 use crate::{
-  app::{AppLicense, AppPath},
+  app::{AppGetter, AppLicense, AppPath},
   process::Process,
   utils::tokio::TokioChildExt,
 };
-#[derive(
-  Default, Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize,
-)]
+
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Rustup
 {
-  home_path: PathBuf,
+  home_path: Arc<PathBuf>,
 }
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct InstallCustomInfo
@@ -82,13 +82,15 @@ impl crate::app::AppInfo for Rustup
 
   async fn license(&self) -> super::Result<Cow<'_, AppLicense>>
   {
-    Ok(Cow::Owned(AppLicense::Or(
-      Box::new(AppLicense::Text("Apache".to_string())),
-      Box::new(AppLicense::Text("MIT".to_string())),
-    )))
+    Ok(Cow::Owned(utils::rust_license()))
   }
 
-  async fn description(&self) -> super::Result<Cow<'_, str>>
+  async fn readme(&self) -> Result<String, Self::Error>
+  {
+    todo!()
+  }
+
+  async fn readme_md(&self) -> Result<String, Self::Error>
   {
     todo!()
   }
@@ -117,8 +119,6 @@ impl crate::app::AppInfo for Rustup
 }
 impl AppPath for Rustup
 {
-  type Error = super::Error;
-
   async fn home_path(&self) -> super::Result<Cow<'_, Path>>
   {
     Ok(Cow::Borrowed(self.home_path.as_path()))
@@ -127,6 +127,13 @@ impl AppPath for Rustup
   async fn bin_path(&self) -> super::Result<Cow<'_, Path>>
   {
     Ok(Cow::Owned(self.home_path.join("bin/rustup")))
+  }
+}
+impl utils::RustAppExt for Rustup
+{
+  fn new(home_path: Arc<PathBuf>) -> crate::app::apps::rust::Result<Self>
+  {
+    Ok(Self { home_path })
   }
 }
 type OnOutputFn = Box<dyn Fn(&[u8], &[u8]) + Send + Sync>;
@@ -363,7 +370,7 @@ impl Process for RustupInstaller
     if exit_status.success()
     {
       self.status.change(RustupInstallStatus::Success)?;
-      Ok(Rustup { home_path: utils::get_home_dir()?.join(".cargo/") })
+      Ok(Rustup { home_path: Arc::new(utils::get_home_dir()?.join(".cargo/")) })
     }
     else
     {
@@ -490,7 +497,6 @@ impl Process for RustupUpdater
 }
 impl crate::app::AppOper for Rustup
 {
-  type Error = super::Error;
   type Installer = RustupInstaller;
   type Reinstaller = RustupReinstaller;
   type Remover = RustupRemover;
@@ -565,14 +571,9 @@ impl Default for InstallCustomInfo
 }
 impl Rustup
 {
-  pub async fn get_by_current_user() -> super::Result<Self>
+  pub fn as_home_path(&self) -> Arc<PathBuf>
   {
-    Ok(Self { home_path: utils::get_home_dir()?.join(".cargo/") })
-  }
-
-  pub async fn to_command(&self) -> super::Result<Command>
-  {
-    Ok(Command::new(self.bin_path().await?.as_ref()))
+    self.home_path.clone()
   }
 
   pub async fn full_version_str(&self) -> super::Result<String>

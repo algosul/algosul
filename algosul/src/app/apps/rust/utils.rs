@@ -3,14 +3,29 @@ use std::{
   fmt::{Display, Formatter},
   fs::Permissions,
   path::{Path, PathBuf},
+  sync::Arc,
   time::SystemTime,
 };
 
 use log::debug;
 
+use crate::app::{
+  apps::rust::{utils, Rustup},
+  AppGetter,
+  AppLicense,
+  AppPath,
+};
+
 pub fn get_home_dir() -> super::Result<PathBuf>
 {
   env::home_dir().ok_or(super::Error::FailedToGetHomeDir)
+}
+pub(super) fn rust_license() -> AppLicense
+{
+  AppLicense::Or(
+    Box::new(AppLicense::Text("Apache".to_string())),
+    Box::new(AppLicense::Text("MIT".to_string())),
+  )
 }
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct RustVersion<'a>
@@ -39,6 +54,29 @@ pub mod regexs
 pub trait ToRustVersion
 {
   fn to_rust_version(&'_ self) -> super::Result<RustVersion<'_>>;
+}
+pub trait RustAppExt: Sized + AppPath<Error = super::Error>
+{
+  fn new(home_path: Arc<PathBuf>) -> super::Result<Self>;
+}
+impl<T: RustAppExt> AppGetter for T
+{
+  async fn get_by_current_user() -> super::Result<Self>
+  {
+    Self::new(Arc::new(get_home_dir()?.join(".cargo/")))
+  }
+
+  #[cfg(unix)]
+  async fn get_by_all_user() -> super::Result<Self>
+  {
+    Self::new(Arc::new(PathBuf::from("/usr/local/bin")))
+  }
+
+  #[cfg(windows)]
+  async fn get_by_all_user() -> Result<Self, Self::Error>
+  {
+    Self::new(Arc::new(PathBuf::from(r"C:\Program Files\Rust stable GNU\")))
+  }
 }
 impl ToRustVersion for String
 {

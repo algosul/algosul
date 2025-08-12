@@ -1,10 +1,10 @@
+pub mod std;
 #[cfg(feature = "utils-tokio")]
 pub mod tokio;
 
-use std::fmt::Display;
-
 use log::error;
 use rfd::MessageLevel;
+use ::std::fmt::Display;
 
 pub trait ResultExt
 {

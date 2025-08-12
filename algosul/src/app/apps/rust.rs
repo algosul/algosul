@@ -10,8 +10,13 @@ use std::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::{sync::TryLockError, task::JoinError};
+pub mod cargo;
+pub mod rustc;
 pub mod rustup;
 pub mod utils;
+
+pub use cargo::Cargo;
+pub use rustc::Rustc;
 pub use rustup::Rustup;
 #[derive(Debug, Error)]
 pub enum Error
@@ -103,6 +108,17 @@ pub enum Profile
   #[default]
   Default,
   Complete,
+}
+impl HostTriple
+{
+  pub fn to_string(self) -> Option<String>
+  {
+    match self
+    {
+      HostTriple::Host => None,
+      HostTriple::Target(target) => Some(target),
+    }
+  }
 }
 impl Display for Toolchain
 {
