@@ -178,7 +178,6 @@ impl RustcCompileFlagForHash
   pub fn into_args(self) -> (Vec<Cow<'static, OsStr>>, Cow<'static, OsStr>)
   {
     let mut args = Vec::<Cow<'static, OsStr>>::new();
-    let metadata_hash = format!("{:016x}", self.default_metadata_hash());
     args!(args:
       if let Some(name) = self.crate_name => cows!["--crate-name", name];
       if let Some(edition) = self.edition => cows!["--edition", edition];

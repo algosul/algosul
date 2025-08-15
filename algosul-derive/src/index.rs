@@ -35,7 +35,7 @@ pub fn get(InputBuf { expr }: InputBuf) -> syn::Result<TokenStream>
   let ident = match ident
   {
     Member::Named(name) => name,
-    Member::Unnamed(index) =>
+    Member::Unnamed(_) =>
     {
       panic!("Can't support number index");
     }
