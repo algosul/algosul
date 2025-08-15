@@ -34,15 +34,17 @@ full = [
     "asset-image",
     "codegen",
     "deps",
-    "deps-thiserror",
+    "dep:thiserror",
     "macros",
     "process",
+    "math",
+    "math-color",
     "utils",
     "utils-tokio",
 ]
 
 app = ["process"]
-app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex", "deps-thiserror"]
+app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex", "dep:thiserror"]
 
 asset = ["dep:toml"]
 asset-text = ["asset", "dep:strfmt", "dep:itertools"]
@@ -51,7 +53,11 @@ asset-image = ["asset", "dep:image"]
 codegen = ["algosul-core/codegen"]
 
 deps = ["algosul-core/deps"]
-deps-thiserror = ["dep:thiserror"]
+deps-thiserror = ["deps", "dep:thiserror"]
+deps-itertools = ["deps", "dep:itertools"]
+
+math = ["dep:algosul-math"]
+math-color = ["math", "algosul-math/color"]
 
 macros = ["dep:algosul-derive"]
 
@@ -130,6 +136,13 @@ version = "0.0.5"
 path = "../algosul-core"
 default-features = false
 features = []
+
+[dependencies.algosul-math]
+version = "0.0.5"
+path = "../algosul-math"
+default-features = false
+features = []
+optional = true
 
 [dependencies.itertools]
 version = "0.14.0"

@@ -40,3 +40,5 @@ pub mod process;
 #[cfg(not(feature = "process"))]
 pub(crate) mod process;
 pub mod utils;
+#[cfg(feature = "math")]
+pub use algosul_math as math;

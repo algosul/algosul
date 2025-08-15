@@ -1,10 +1,10 @@
 use std::ops::Range;
 
 use algosul_derive::get;
-use num_traits::{float::FloatCore, Bounded, Euclid, Num, One, PrimInt};
+use num_traits::{float::FloatCore, Bounded, Euclid, Num, One};
 use thiserror::Error;
 
-use crate::num::{NumLerp, NumPercent, NumRemap, NumsRemap};
+use crate::num::{NumLerp, NumPercent, NumsRemap};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Color<T: Clone>

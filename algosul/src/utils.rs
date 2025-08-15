@@ -3,7 +3,6 @@ pub mod std;
 pub mod tokio;
 
 use log::error;
-use rfd::MessageLevel;
 use ::std::fmt::Display;
 
 pub trait ResultExt
