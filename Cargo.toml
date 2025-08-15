@@ -2,7 +2,7 @@
 resolver = "3"
 members = ["algosul", "algosul-core", "algosul-derive", "algosul-math"]
 [workspace.package]
-version = "0.0.4"
+version = "0.0.5"
 authors = ["algosul@github.com"]
 homepage = "https://github.com/algosul/algosul"
 repository = "https://github.com/algosul/algosul"

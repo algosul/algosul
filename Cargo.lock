@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "algosul"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "algosul-core",
  "algosul-derive",
@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "algosul-core"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "glob",
  "proc-macro2",
@@ -65,7 +65,7 @@ dependencies = [
 
 [[package]]
 name = "algosul-derive"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "algosul-core",
  "env_logger",
@@ -77,9 +77,8 @@ dependencies = [
 
 [[package]]
 name = "algosul-math"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
- "algosul-core",
  "algosul-derive",
  "num",
  "num-traits",

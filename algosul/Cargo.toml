@@ -119,14 +119,14 @@ features = []
 optional = true
 
 [dependencies.algosul-derive]
-version = "0.0.4"
+version = "0.0.5"
 path = "../algosul-derive"
 default-features = false
 features = []
 optional = true
 
 [dependencies.algosul-core]
-version = "0.0.4"
+version = "0.0.5"
 path = "../algosul-core"
 default-features = false
 features = []
@@ -151,7 +151,7 @@ version = "0.15.4"
 optional = true
 
 [build-dependencies.algosul-core]
-version = "0.0.4"
+version = "0.0.5"
 path = "../algosul-core"
 default-features = false
 features = ["codegen"]

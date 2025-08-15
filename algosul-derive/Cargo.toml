@@ -31,7 +31,7 @@ syn = { version = "2.0.104", features = ["full"] }
 log = { version = "0.4.27" }
 
 [dependencies.algosul-core]
-version = "0.0.4"
+version = "0.0.5"
 path = "../algosul-core"
 default-features = false
 features = ["codegen"]  
