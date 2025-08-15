@@ -10,45 +10,162 @@ edition.workspace = true
 description.workspace = true
 readme.workspace = true
 build = "build.rs"
+autotests = false
+autobins = false
+autobenches = false
+autoexamples = false
 
 [lib]
 name = "algosul"
 crate-type = ["rlib"]
 
-[[bin]]
-name = "algosul"
-path = "src/bin/main.rs"
-required-features = ["app-apps", "gtk4", "glib"]
-
 [[test]]
-name = "i18n"
-path = "tests/i18n.rs"
-required-features = ["i18n-marco"]
+name = "asset"
+path = "tests/asset.rs"
+required-features = ["asset-image", "asset-text", "macros", "rayon"]
 
 [features]
-default = ["app-apps", "i18n"]
-app = []
-app-apps = ["app", "dep:serde", "dep:tokio", "dep:reqwest"]
-gtk4 = ["dep:gtk4"]
-glib = ["dep:glib"]
-i18n = ["algosul-core/i18n", "dep:strfmt", "dep:sys-locale"]
-i18n-marco = ["i18n", "marco"]
-marco = ["dep:algosul-marco"]
-[dependencies]
-algosul-core = { path = "../algosul-core", default-features = false, features = [], optional = true }
-algosul-marco = { path = "../algosul-marco", default-features = false, features = [], optional = true }
-tokio = { version = "1.*", features = [
+default = ["app-apps", "asset"]
+full = [
+    "app",
+    "app-apps",
+    "asset",
+    "asset-text",
+    "asset-image",
+    "codegen",
+    "deps",
+    "deps-thiserror",
+    "macros",
+    "process",
+    "utils",
+    "utils-tokio",
+]
+
+app = ["process"]
+app-apps = ["app", "utils-tokio", "dep:reqwest", "dep:regex", "deps-thiserror"]
+
+asset = ["dep:toml"]
+asset-text = ["asset", "dep:strfmt", "dep:itertools"]
+asset-image = ["asset", "dep:image"]
+
+codegen = ["algosul-core/codegen"]
+
+deps = ["algosul-core/deps"]
+deps-thiserror = ["dep:thiserror"]
+
+macros = ["dep:algosul-derive"]
+
+process = []
+
+utils = ["dep:rfd"]
+utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
+
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = []
+
+[dependencies.image]
+version = "0.25.6"
+features = ["serde"]
+optional = true
+
+[dependencies.sys-locale]
+version = "0.3.2"
+optional = true
+
+[dependencies.strfmt]
+version = "0.2.5"
+optional = true
+
+[dependencies.env_logger]
+version = "0.11.8"
+
+[dependencies.reqwest]
+version = "0.12.22"
+features = ["blocking"]
+optional = true
+
+[dependencies.log]
+version = "0.4.27"
+features = ["serde", "kv_serde"]
+
+[dependencies.toml]
+version = "0.9.2"
+optional = true
+
+[dependencies.serde]
+version = "1.0.219"
+features = ["derive"]
+
+[dependencies.bytes]
+version = "1.10.1"
+features = ["serde"]
+optional = true
+
+[dependencies.tokio]
+version = "1.46.1"
+features = [
     "process",
     "io-util",
     "rt",
     "macros",
     "rt-multi-thread",
-], optional = true }
-serde = { version = "1.*", features = ["derive"], optional = true }
-log = { version = "0.4", features = ["serde", "kv_serde"] }
-reqwest = { version = "0.11", features = ["blocking"], optional = true }
-env_logger = { version = "0.11" }
-gtk4 = { version = "0.9", features = ["v4_10"], optional = true }
-glib = { version = "0.20", features = [], optional = true }
-strfmt = { version = "*", optional = true }
-sys-locale = { version = "0.3.2", optional = true }
+]
+optional = true
+
+[dependencies.rayon]
+version = "1.10.0"
+features = []
+optional = true
+
+[dependencies.algosul-derive]
+version = "0.0.5"
+path = "../algosul-derive"
+default-features = false
+features = []
+optional = true
+
+[dependencies.algosul-core]
+version = "0.0.5"
+path = "../algosul-core"
+default-features = false
+features = []
+
+[dependencies.itertools]
+version = "0.14.0"
+features = []
+optional = true
+
+[dependencies.regex]
+version = "1.11.1"
+features = []
+optional = true
+
+[dependencies.thiserror]
+version = "1.0.69"
+features = []
+optional = true
+
+[dependencies.rfd]
+version = "0.15.4"
+optional = true
+
+[build-dependencies.algosul-core]
+version = "0.0.5"
+path = "../algosul-core"
+default-features = false
+features = ["codegen"]
+[build-dependencies.proc-macro2]
+version = "1.0.95"
+[build-dependencies.syn]
+version = "2.0.104"
+features = ["full"]
+[build-dependencies.log]
+version = "0.4.27"
+features = []
+[build-dependencies.env_logger]
+version = "0.11.8"
+features = []
+[build-dependencies.glob]
+version = "0.3.2"
+features = []
