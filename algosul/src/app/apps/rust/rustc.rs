@@ -9,16 +9,11 @@ use std::{
   sync::Arc,
 };
 
-use algosul_core::{args, cow, cows, utils::std::MapToArgs};
+use algosul_core::{args, cows, utils::std::MapToArgs};
 use log::info;
-use serde::{Deserialize, Serialize};
-use toml::{toml, Value};
 
 use crate::app::{
-  apps::{
-    rust,
-    rust::{utils, Rustup},
-  },
+  apps::{rust, rust::utils},
   AppInfo,
   AppLicense,
   AppPath,

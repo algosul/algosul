@@ -1,9 +1,10 @@
 use log::debug;
 use proc_macro::TokenStream;
+use quote::ToTokens;
 use syn::parse2;
 
-use crate::from_dir::InputBuf;
 mod from_dir;
+mod index;
 /// Convert from folder to module
 /// # Grammar
 /// ```text
@@ -36,7 +37,17 @@ pub fn from_dir(input: TokenStream) -> TokenStream
   let _ = env_logger::try_init();
   let path = proc_macro::Span::call_site().local_file().unwrap();
   let base = path.parent().unwrap();
-  let input: InputBuf = parse2(input.into()).unwrap();
+  let input: from_dir::InputBuf = parse2(input.into()).unwrap();
   debug!("base: {base:?}, input: {:?}", input.path());
   from_dir::from_dir(base, input.path(), input.as_ref()).unwrap().into()
+}
+#[proc_macro]
+pub fn get(input: TokenStream) -> TokenStream
+{
+  let _ = env_logger::try_init();
+  let path = proc_macro::Span::call_site().local_file().unwrap();
+  let base = path.parent().unwrap();
+  let input: index::InputBuf = parse2(input.into()).unwrap();
+  debug!("base: {base:?}, input: {:?}", input.expr().into_token_stream());
+  index::get(input).unwrap().into()
 }

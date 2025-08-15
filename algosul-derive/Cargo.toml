@@ -16,7 +16,8 @@ proc-macro = true
 
 [features]
 default = []
-full = []
+full = ["index"]
+index = []
 
 [package.metadata.docs.rs]
 features = ["full"]

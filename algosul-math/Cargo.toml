@@ -1,0 +1,23 @@
+[package]
+name = "algosul-math"
+version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+
+[features]
+color = []
+serde = ["dep:serde", "num/serde"]
+
+[dependencies]
+serde = { version = "1.0.219", features = ["derive"], optional = true }
+num = { version = "0.4.3", features = [] }
+num-traits = { version = "0.2.19", features = [] }
+algosul-core = { path = "../algosul-core", version = "0.0.4", features = ["deps"] }
+algosul-derive = { path = "../algosul-derive", version = "0.0.4", features = ["index"] }
+thiserror = { version = "1.0.69", features = [] }

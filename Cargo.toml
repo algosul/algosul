@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["algosul", "algosul-core", "algosul-derive"]
+members = ["algosul", "algosul-core", "algosul-derive", "algosul-math"]
 [workspace.package]
 version = "0.0.4"
 authors = ["algosul@github.com"]

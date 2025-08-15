@@ -19,7 +19,7 @@ use super::{
   Toolchain,
 };
 use crate::{
-  app::{AppGetter, AppLicense, AppPath},
+  app::{AppLicense, AppPath},
   process::Process,
   utils::tokio::TokioChildExt,
 };

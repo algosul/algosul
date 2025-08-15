@@ -142,7 +142,7 @@ features = []
 optional = true
 
 [dependencies.thiserror]
-version = "1.0.31"
+version = "1.0.69"
 features = []
 optional = true
 
