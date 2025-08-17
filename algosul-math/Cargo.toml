@@ -13,6 +13,8 @@ readme.workspace = true
 [features]
 color = []
 serde = ["dep:serde", "num/serde"]
+unstable = []
+unstable-f16-f128 = ["unstable"]
 
 [dependencies]
 serde = { version = "1.0.219", features = ["derive"], optional = true }

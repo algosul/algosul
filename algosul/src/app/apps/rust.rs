@@ -24,29 +24,55 @@ pub enum Error
   #[error("Unsupported: {0}")]
   Unsupported(Cow<'static, str>),
   #[error("IO error: {0}")]
-  IOError(#[from] io::Error),
+  IO(
+    #[from]
+    #[source]
+    io::Error,
+  ),
   #[error("Task join error: {0}")]
-  TaskJoinError(#[from] JoinError),
-  #[error("Inner error: {0}")]
-  InnerError(Cow<'static, str>),
-  #[error("Failed: {0}")]
-  Failed(Cow<'static, str>),
+  TaskJoin(
+    #[from]
+    #[source]
+    JoinError,
+  ),
   #[error("Failed to get HOME dir")]
   FailedToGetHomeDir,
   #[error("Request error: {0}")]
-  RequestError(#[from] reqwest::Error),
+  Request(
+    #[from]
+    #[source]
+    reqwest::Error,
+  ),
   #[error("From utf8 error: {0}")]
-  FromUtf8Error(#[from] FromUtf8Error),
+  FromUtf8(
+    #[from]
+    #[source]
+    FromUtf8Error,
+  ),
   #[error("Regex error: {0}")]
-  RegexError(#[from] regex::Error),
+  Regex(
+    #[from]
+    #[source]
+    regex::Error,
+  ),
   #[error("Version string no match")]
   VersionStringNoMatch,
   #[error("Try lock error: {0}")]
-  TryLockError(#[from] TryLockError),
+  TryLock(
+    #[from]
+    #[source]
+    TryLockError,
+  ),
   #[error("System time error: {0}")]
-  SystemTimeError(#[from] SystemTimeError),
+  SystemTime(
+    #[from]
+    #[source]
+    SystemTimeError,
+  ),
   #[error("Invalid rustup-init.sh content")]
   InvalidRsinitShContent,
+  #[error("Failed to run: {0}")]
+  FailedToRun(String),
 }
 pub type Result<T> = std::result::Result<T, Error>;
 #[derive(
@@ -207,7 +233,11 @@ mod tests
   use utils::ToRustVersion;
 
   use super::*;
-  use crate::{app::AppOper, process::Process};
+  use crate::{
+    app::{AppGetter, AppOper},
+    process::Process,
+  };
+
   #[tokio::test]
   #[ignore]
   async fn install_rustup()

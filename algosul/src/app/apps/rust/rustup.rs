@@ -379,7 +379,7 @@ impl Process for RustupInstaller
         stdout: String::from_utf8_lossy_owned(stdout_buf.to_vec()),
         stderr: String::from_utf8_lossy_owned(stderr_buf.to_vec()),
       })?;
-      Err(super::Error::Failed(
+      Err(super::Error::FailedToRun(
         "Rustup installation failed. For more, please use on_status_changed."
           .into(),
       ))
@@ -459,7 +459,7 @@ impl Process for RustupRemover
         stdout: String::from_utf8_lossy_owned(stdout_buf.to_vec()),
         stderr: String::from_utf8_lossy_owned(stderr_buf.to_vec()),
       })?;
-      Err(super::Error::Failed(
+      Err(super::Error::FailedToRun(
         "Rustup installation failed. For more, please use on_status_changed."
           .into(),
       ))

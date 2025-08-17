@@ -1,51 +1,40 @@
+pub mod dynamic;
 pub mod std;
 #[cfg(feature = "utils-tokio")]
 pub mod tokio;
 
-use log::error;
-use ::std::fmt::Display;
+use ::std::cmp::Ordering;
 
-pub trait ResultExt
+pub trait PartialOrdExt: PartialOrd<Self>
 {
-  type Output;
-  fn unwarp_or_log(self) -> Self::Output;
-  fn unwarp_or_print(self) -> Self::Output;
-  fn or_log(self) -> Self;
-  fn or_print(self) -> Self;
+  fn partial_min_max<'a>(
+    &'a self, right: &'a Self,
+  ) -> Option<(&'a Self, &'a Self)>;
 }
-impl<T: Default, E: Display> ResultExt for Result<T, E>
+
+pub trait OrdExt: Ord + PartialOrdExt
 {
-  type Output = T;
+  fn min_max<'a>(&'a self, right: &'a Self) -> (&'a Self, &'a Self);
+}
 
-  fn unwarp_or_log(self) -> Self::Output
+impl<N: PartialOrd<N>> PartialOrdExt for N
+{
+  fn partial_min_max<'a>(
+    &'a self, right: &'a Self,
+  ) -> Option<(&'a Self, &'a Self)>
   {
-    self.unwrap_or_else(|e| {
-      error!("{e}");
-      T::default()
+    self.partial_cmp(right).map(|ord| match ord
+    {
+      Ordering::Less => (self, right),
+      _ => (right, self),
     })
   }
+}
 
-  fn unwarp_or_print(self) -> Self::Output
+impl<N: Ord> OrdExt for N
+{
+  fn min_max<'a>(&'a self, right: &'a Self) -> (&'a Self, &'a Self)
   {
-    self.unwrap_or_else(|e| {
-      println!("{e}");
-      T::default()
-    })
-  }
-
-  fn or_log(self) -> Self
-  {
-    self.map_err(|e| {
-      error!("{e}");
-      e
-    })
-  }
-
-  fn or_print(self) -> Self
-  {
-    self.map_err(|e| {
-      println!("{e}");
-      e
-    })
+    if self < right { (self, right) } else { (right, self) }
   }
 }

@@ -34,7 +34,6 @@ pub mod deps;
 pub mod macros;
 #[cfg(not(feature = "macros"))]
 pub(crate) mod macros;
-mod os;
 #[cfg(feature = "process")]
 pub mod process;
 #[cfg(not(feature = "process"))]
@@ -42,3 +41,6 @@ pub(crate) mod process;
 pub mod utils;
 #[cfg(feature = "math")]
 pub use algosul_math as math;
+
+#[cfg(feature = "langs")]
+pub mod langs;

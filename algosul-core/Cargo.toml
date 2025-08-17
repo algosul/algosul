@@ -15,9 +15,13 @@ default = ["codegen"]
 full = [
     "codegen",
     "deps",
+    "utils",
+    "macros"
 ]
 codegen = ["unicode-xid", "syn", "proc-macro2", "quote", "glob"]
 deps = []
+utils = []
+macros = []
 
 [package.metadata.docs.rs]
 features = ["full"]

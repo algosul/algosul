@@ -3,28 +3,6 @@ use std::{
   ffi::{OsStr, OsString},
 };
 
-#[macro_export]
-macro_rules! cows {
-  [] => {
-    []
-  };
-  [$($elem:expr),+ $(,)?] => {
-    [
-      $(
-        $crate::cow!($elem)
-      ),+
-    ]
-  };
-  [$elem:expr; $n:expr] => (
-    [$crate::cow!($elem); $n]
-  );
-}
-#[macro_export]
-macro_rules! cow {
-  ($expr:expr) => {
-    ::std::borrow::Cow::<'_, _>::from($expr)
-  };
-}
 pub trait MapToArg<'b>
 {
   fn map_to_arg(self) -> Cow<'b, OsStr>;
