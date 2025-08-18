@@ -1,40 +1,82 @@
 use std::ops::Range;
 
-use num_traits::{float::FloatCore, Bounded, Num};
-pub trait NumConst
+use num_traits::{float::FloatCore, Bounded, NumOps};
+
+/// Returns the integer constant `N` as the target numeric type `T`.
+///
+/// Works for any numeric type (including floats), e.g. `int::<f64, 180>()` ->
+/// `180.0`.
+/// # Examples
+/// ```
+/// # use algosul_math::num::int;
+/// let x: i32 = int::<i32, 180>();
+/// assert_eq!(x, 180);
+///
+/// let y: f64 = int::<f64, 180>();
+/// assert_eq!(y, 180.0);
+///
+/// let z: i32 = int::<i32, -180>();
+/// assert_eq!(z, -180);
+///
+/// let y: f64 = int::<f64, -180>();
+/// assert_eq!(y, -180.0);
+/// ```
+#[inline]
+pub fn int<T: NumInt<N>, const N: i128>() -> T
 {
-  const ZERO: Self;
-  const ONE: Self;
-  const TWO: Self;
-  const THREE: Self;
-  const FOUR: Self;
-  const FIVE: Self;
-  const SIX: Self;
-  const SEVEN: Self;
-  const EIGHT: Self;
-  const NINE: Self;
-  const TEN: Self;
+  T::int()
 }
-/// + this trait can't implement for u8/i8
-pub trait NumDegConst: NumConst
+/// Returns the integer constant `N` as the target numeric type `T` in a const
+/// context.
+///
+/// Prefer using [`int`] in most cases, as it is more flexible and has the same
+/// performance. [`const_int`] is mainly useful in `const fn` or other
+/// `const` contexts.
+#[inline]
+pub const fn const_int<T: NumConstInt<N>, const N: i128>() -> T
 {
-  const DEG_30: Self;
-  const DEG_45: Self;
-  const DEG_60: Self;
-  const DEG_90: Self;
-  const DEG_180: Self;
-  const DEG_270: Self;
-  const DEG_360: Self;
-  const DEG_720: Self;
+  T::CONST_INT
+}
+/// For impl the integer constant `N` as the target numeric type `T`.
+///
+/// see [Self::int]
+pub trait NumInt<const N: i128>: Sized
+{
+  /// Returns the integer constant `N` as the target numeric type `T`.
+  ///
+  /// Works for any numeric type (including floats), e.g. `int::<f64, 180>()` ->
+  /// `180.0`.
+  fn int() -> Self;
+  #[inline]
+  fn set_int(&mut self)
+  {
+    *self = Self::int();
+  }
+  #[inline]
+  fn is_int(&self) -> bool
+  where Self: PartialEq
+  {
+    *self == Self::int()
+  }
+}
+/// For impl the integer constant `N` as the target numeric type `T` in a const
+/// context.
+///
+/// Prefer using [`NumInt`] or [`int`] in most cases, as it is more flexible and
+/// has the same performance. [`NumConstInt`] and [`const_int`] is mainly useful
+/// in `const fn` or other `const` contexts.
+pub trait NumConstInt<const N: i128>: NumInt<N>
+{
+  const CONST_INT: Self;
 }
 pub trait NumPercent<N = Self>
 {
   /// # Safety
   /// + `range.start != range.end`
-  fn percent_in<U: Num + From<N> + Clone>(self, range: Range<U>) -> U;
+  fn percent_in<U: NumOps + From<N> + Clone>(self, range: Range<U>) -> U;
   /// # Safety
   /// + `range.start != range.end`
-  fn try_percent_in<U: Num + TryFrom<N> + Clone>(
+  fn try_percent_in<U: NumOps + TryFrom<N> + Clone>(
     self, range: Range<U>,
   ) -> Result<U, U::Error>;
 }
@@ -51,10 +93,11 @@ pub trait NumNormalize<N = Self>
   /// # Result
   /// `0..360`
   fn normalize_deg(self) -> N
-  where N: NumDegConst;
+  where N: NumInt<360>;
   /// # Result
   /// `0..1`
-  fn normalize_01(self) -> N;
+  fn normalize_01(self) -> N
+  where N: NumInt<1>;
 }
 pub trait NumRemap<N = Self>
 {
@@ -114,34 +157,22 @@ pub trait NumsRemap<N, const L: usize>
     ))?
   }
 }
-impl<N: Num + PartialOrd + Clone + NumConst> NumNormalize<N> for N
+impl<T: NumConstInt<N>, const N: i128> NumInt<N> for T
 {
-  fn normalize(self, max: N) -> N
+  fn int() -> Self
   {
-    let temp = self % max.clone();
-    if temp < N::ZERO { temp + max } else { temp }
-  }
-
-  fn normalize_deg(self) -> N
-  where N: NumDegConst
-  {
-    self.normalize(N::DEG_360)
-  }
-
-  fn normalize_01(self) -> N
-  {
-    self.normalize(N::ONE)
+    Self::CONST_INT
   }
 }
-impl<N: Num> NumPercent<N> for N
+impl<N: NumOps> NumPercent<N> for N
 {
-  fn percent_in<U: Num + From<N> + Clone>(self, range: Range<U>) -> U
+  fn percent_in<U: NumOps + From<N> + Clone>(self, range: Range<U>) -> U
   {
     (<U as From<N>>::from(self) - range.start.clone())
       / (range.end - range.start)
   }
 
-  fn try_percent_in<U: Num + TryFrom<N> + Clone>(
+  fn try_percent_in<U: NumOps + TryFrom<N> + Clone>(
     self, range: Range<U>,
   ) -> Result<U, U::Error>
   {
@@ -163,7 +194,27 @@ impl<N: FloatCore> NumLerp<N> for N
     ((N::one() - alpha) * range.start) + (alpha * range.end)
   }
 }
-impl<N: Num + NumPercent<N>> NumRemap<N> for N
+impl<N: NumOps + PartialOrd + Clone + NumInt<0>> NumNormalize<N> for N
+{
+  fn normalize(self, max: N) -> N
+  {
+    let temp = self % max.clone();
+    if temp < int::<N, 0>() { temp + max } else { temp }
+  }
+
+  fn normalize_deg(self) -> N
+  where N: NumInt<360>
+  {
+    self.normalize(int::<N, 360>())
+  }
+
+  fn normalize_01(self) -> N
+  where N: NumInt<1>
+  {
+    self.normalize(int::<N, 1>())
+  }
+}
+impl<N: NumOps + NumPercent<N>> NumRemap<N> for N
 {
   fn remap<U: FloatCore + NumLerp<U> + From<N>>(
     self, from: Range<U>, to: Range<U>,
@@ -197,7 +248,7 @@ impl<N: Num + NumPercent<N>> NumRemap<N> for N
     )
   }
 }
-impl<N: Num, const L: usize> NumsRemap<N, L> for [N; L]
+impl<N: NumOps, const L: usize> NumsRemap<N, L> for [N; L]
 {
   fn remap<U: FloatCore + NumRemap<U> + From<N>>(
     self, from: Range<U>, to: Range<U>,
@@ -215,72 +266,63 @@ impl<N: Num, const L: usize> NumsRemap<N, L> for [N; L]
     })
   }
 }
-macro_rules! impl_num_const {
+macro_rules! impl_i_const {
   ($($ty:ty)*) => {
-    $(
-      impl NumConst for $ty {
-        const ZERO: Self = 0;
-        const ONE: Self = 1;
-        const TWO: Self = 2;
-        const THREE: Self = 3;
-        const FOUR: Self = 4;
-        const FIVE: Self = 5;
-        const SIX: Self = 6;
-        const SEVEN: Self = 7;
-        const EIGHT: Self = 8;
-        const NINE: Self = 9;
-        const TEN: Self = 10;
-      }
-    )*
+    $(impl_num_const!(impl $ty =>
+      -10 -9 -8 -7 -6 -5 -4 -3 -2 -1 0 1 2 3 4 5 6 7 8 9 10
+    );)*
   };
 }
-macro_rules! impl_num_deg_const {
+macro_rules! impl_u_const {
   ($($ty:ty)*) => {
-    $(
-      impl NumDegConst for $ty {
-        const DEG_180: Self = 180;
-        const DEG_270: Self = 270;
-        const DEG_30: Self = 30;
-        const DEG_360: Self = 360;
-        const DEG_45: Self = 45;
-        const DEG_60: Self = 60;
-        const DEG_720: Self = 720;
-        const DEG_90: Self = 90;
-      }
-    )*
+    $(impl_num_const!(impl $ty =>
+      0 1 2 3 4 5 6 7 8 9 10
+    );)*
+  };
+}
+macro_rules! impl_i_deg_const {
+  ($($ty:ty)*) => {
+    $(impl_num_const!(impl $ty =>
+      -720 -360 -270 -180 -150 -120 -90 -60 -30 -15
+      15 30 60 90 120 150 180 270 360 720
+    );)*
+  };
+}
+macro_rules! impl_u_deg_const {
+  ($($ty:ty)*) => {
+    $(impl_num_const!(impl $ty =>
+      15 30 60 90 120 150 180 270 360 720
+    );)*
+  };
+}
+macro_rules! impl_f_const {
+  ($($ty:ty)*) => {
+    $(impl_float_const!(impl $ty =>
+      -720 -720.0 -360 -360.0 -270 -270.0 -180 -180.0 -150 -150.0
+      -120 -120.0 -90 -90.0 -60 -60.0 -30 -30.0 -15 -15.0
+      -10 -10.0 -9 -9.0 -8 -8.0 -7 -7.0 -6 -6.0
+      -5 -5.0 -4 -4.0 -3 -3.0 -2 -2.0 -1 -1.0
+      0 0.0 1 1.0 2 2.0 3 3.0 4 4.0 5 5.0
+      6 6.0 7 7.0 8 8.0 9 9.0 10 10.0
+      15 15.0 30 30.0 60 60.0 90 90.0 120 120.0 150 150.0
+      180 180.0 270 270.0 360 360.0 720 720.0
+    );)*
+  };
+}
+macro_rules! impl_num_const {
+  (impl $ty:ty => $($n:literal)+) => {
+    $(impl NumConstInt<$n> for $ty { const CONST_INT: Self = $n; })+
   };
 }
 macro_rules! impl_float_const {
-  ($($ty:ty)*) => {
-    $(
-      impl NumConst for $ty {
-        const ZERO: Self = 0.0;
-        const ONE: Self = 1.0;
-        const TWO: Self = 2.0;
-        const THREE: Self = 3.0;
-        const FOUR: Self = 4.0;
-        const FIVE: Self = 5.0;
-        const SIX: Self = 6.0;
-        const SEVEN: Self = 7.0;
-        const EIGHT: Self = 8.0;
-        const NINE: Self = 9.0;
-        const TEN: Self = 10.0;
-      }
-      impl NumDegConst for $ty {
-        const DEG_180: Self = 180.0;
-        const DEG_270: Self = 270.0;
-        const DEG_30: Self = 30.0;
-        const DEG_360: Self = 360.0;
-        const DEG_45: Self = 45.0;
-        const DEG_60: Self = 60.0;
-        const DEG_720: Self = 720.0;
-        const DEG_90: Self = 90.0;
-      }
-    )*
+  (impl $ty:ty => $($i:literal $f:literal)+) => {
+    $(impl NumConstInt<$i> for $ty { const CONST_INT: Self = $f; })+
   };
 }
-impl_num_const!(u8 i8 u16 i16 u32 i32 u64 i64 u128 i128);
-impl_num_deg_const!(u16 i16 u32 i32 u64 i64 u128 i128);
+impl_u_const!(u8 u16 u32 u64 u128);
+impl_i_const!(i8 i16 i32 i64 i128);
+impl_u_deg_const!(u16 u32 u64 u128);
+impl_i_deg_const!(i16 i32 i64 i128);
 #[cfg(feature = "unstable-f16-f128")]
-impl_float_const!(f16 f128);
-impl_float_const!(f32 f64);
+impl_f_const!(f16 f128);
+impl_f_const!(f32 f64);
