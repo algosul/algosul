@@ -1,4 +1,3 @@
-#![allow(async_fn_in_trait)]
 #![feature(string_from_utf8_lossy_owned)]
 //! #Example
 //! ```

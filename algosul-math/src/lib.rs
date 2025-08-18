@@ -1,9 +1,4 @@
-#![feature(portable_simd)]
-#![cfg_attr(feature = "unstable-f16-f128", cfeature(f16, f128))]
-#![feature(impl_trait_in_assoc_type)]
-#![feature(array_repeat)]
-#![feature(negative_impls)]
-#![feature(array_try_map)]
+#![cfg_attr(feature = "unstable", feature(array_try_map))]
 //! # Example
 //! + `Vector<T, N>`
 //! + `Matrix<T, ROW, COL>`

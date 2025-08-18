@@ -73,7 +73,7 @@ pub enum UpdateInfo
 }
 impl crate::app::AppInfo for Rustup
 {
-  type Error = super::Error;
+  type Result<T> = super::Result<T>;
 
   async fn name(&self) -> Cow<'_, str>
   {
@@ -85,12 +85,12 @@ impl crate::app::AppInfo for Rustup
     Ok(Cow::Owned(utils::rust_license()))
   }
 
-  async fn readme(&self) -> Result<String, Self::Error>
+  async fn readme(&self) -> Self::Result<String>
   {
     todo!()
   }
 
-  async fn readme_md(&self) -> Result<String, Self::Error>
+  async fn readme_md(&self) -> Self::Result<String>
   {
     todo!()
   }
@@ -127,6 +127,11 @@ impl AppPath for Rustup
   async fn bin_path(&self) -> super::Result<Cow<'_, Path>>
   {
     Ok(Cow::Owned(self.home_path.join("bin/rustup")))
+  }
+
+  async fn to_command(&self) -> Self::Result<Command>
+  {
+    Ok(Command::new(self.bin_path().await?.as_ref()))
   }
 }
 impl utils::RustAppExt for Rustup
@@ -333,8 +338,8 @@ impl RustupUpdater
 }
 impl Process for RustupInstaller
 {
-  type Error = super::Error;
   type Output = Rustup;
+  type Result<T> = super::Result<T>;
   type Status = RustupInstallStatus;
 
   async fn run(mut self) -> super::Result<Self::Output>
@@ -387,9 +392,8 @@ impl Process for RustupInstaller
   }
 
   fn on_status_changed(
-    &mut self,
-    f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
-  ) -> Result<(), Self::Error>
+    &mut self, f: impl Fn(&Self::Status) -> Self::Result<()> + Send + 'static,
+  ) -> Self::Result<()>
   {
     self.status.on_changed(f);
     Ok(())
@@ -397,8 +401,8 @@ impl Process for RustupInstaller
 }
 impl Process for RustupReinstaller
 {
-  type Error = super::Error;
   type Output = Rustup;
+  type Result<T> = super::Result<T>;
   type Status = RustupReinstallStatus;
 
   async fn run(self) -> super::Result<Self::Output>
@@ -407,9 +411,8 @@ impl Process for RustupReinstaller
   }
 
   fn on_status_changed(
-    &mut self,
-    f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
-  ) -> Result<(), Self::Error>
+    &mut self, f: impl Fn(&Self::Status) -> Self::Result<()> + Send + 'static,
+  ) -> Self::Result<()>
   {
     self.status.on_changed(f);
     Ok(())
@@ -417,8 +420,8 @@ impl Process for RustupReinstaller
 }
 impl Process for RustupRemover
 {
-  type Error = super::Error;
   type Output = ();
+  type Result<T> = super::Result<T>;
   type Status = RustupRemoveStatus;
 
   async fn run(mut self) -> super::Result<Self::Output>
@@ -467,9 +470,8 @@ impl Process for RustupRemover
   }
 
   fn on_status_changed(
-    &mut self,
-    f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
-  ) -> Result<(), Self::Error>
+    &mut self, f: impl Fn(&Self::Status) -> Self::Result<()> + Send + 'static,
+  ) -> Self::Result<()>
   {
     self.status.on_changed(f);
     Ok(())
@@ -477,8 +479,8 @@ impl Process for RustupRemover
 }
 impl Process for RustupUpdater
 {
-  type Error = super::Error;
   type Output = ();
+  type Result<T> = super::Result<T>;
   type Status = RustupUpdateStatus;
 
   async fn run(self) -> super::Result<Self::Output>
@@ -487,9 +489,8 @@ impl Process for RustupUpdater
   }
 
   fn on_status_changed(
-    &mut self,
-    f: impl Fn(&Self::Status) -> Result<(), Self::Error> + Send + 'static,
-  ) -> Result<(), Self::Error>
+    &mut self, f: impl Fn(&Self::Status) -> Self::Result<()> + Send + 'static,
+  ) -> Self::Result<()>
   {
     self.status.on_changed(f);
     Ok(())
@@ -502,22 +503,22 @@ impl crate::app::AppOper for Rustup
   type Remover = RustupRemover;
   type Updater = RustupUpdater;
 
-  async fn installer() -> Result<Self::Installer, Self::Error>
+  async fn installer() -> Self::Result<Self::Installer>
   {
     Ok(Self::Installer::default())
   }
 
-  async fn reinstaller(self) -> Result<Self::Reinstaller, Self::Error>
+  async fn reinstaller(self) -> Self::Result<Self::Reinstaller>
   {
     Ok(Self::Reinstaller::new(self))
   }
 
-  async fn remover(self) -> Result<Self::Remover, Self::Error>
+  async fn remover(self) -> Self::Result<Self::Remover>
   {
     Ok(Self::Remover::new(self))
   }
 
-  async fn updater(self) -> Result<Self::Updater, Self::Error>
+  async fn updater(self) -> Self::Result<Self::Updater>
   {
     Ok(Self::Updater::new(self))
   }

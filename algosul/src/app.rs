@@ -34,33 +34,41 @@ pub enum AppLicense
 /// application information
 pub trait AppInfo
 {
-  type Error;
-  async fn name(&self) -> Cow<'_, str>;
-  async fn license(&self) -> Result<Cow<'_, AppLicense>, Self::Error>;
-  async fn readme(&self) -> Result<String, Self::Error>;
-  async fn readme_md(&self) -> Result<String, Self::Error>;
-  async fn documentation(&self) -> Result<Cow<'_, str>, Self::Error>;
-  async fn homepage(&self) -> Result<Cow<'_, str>, Self::Error>;
-  async fn repository(&self) -> Result<Cow<'_, str>, Self::Error>;
-  async fn version(&self) -> Result<Cow<'_, str>, Self::Error>;
+  type Result<T>;
+  fn name(&self) -> impl Future<Output = Cow<'_, str>> + Send;
+  fn license(
+    &self,
+  ) -> impl Future<Output = Self::Result<Cow<'_, AppLicense>>> + Send;
+  fn readme(&self) -> impl Future<Output = Self::Result<String>> + Send;
+  fn readme_md(&self) -> impl Future<Output = Self::Result<String>> + Send;
+  fn documentation(
+    &self,
+  ) -> impl Future<Output = Self::Result<Cow<'_, str>>> + Send;
+  fn homepage(&self)
+  -> impl Future<Output = Self::Result<Cow<'_, str>>> + Send;
+  fn repository(
+    &self,
+  ) -> impl Future<Output = Self::Result<Cow<'_, str>>> + Send;
+  fn version(&self) -> impl Future<Output = Self::Result<Cow<'_, str>>> + Send;
 }
 /// about the application paths
 pub trait AppPath: AppInfo
 {
   /// e.g. '~/.cargo/'
-  async fn home_path(&self) -> Result<Cow<'_, Path>, Self::Error>;
+  fn home_path(
+    &self,
+  ) -> impl Future<Output = Self::Result<Cow<'_, Path>>> + Send;
   /// e.g. '~/.cargo/bin/rustup'
-  async fn bin_path(&self) -> Result<Cow<'_, Path>, Self::Error>;
-  async fn to_command(&self) -> Result<Command, Self::Error>
-  {
-    Ok(Command::new(self.bin_path().await?.as_ref()))
-  }
+  fn bin_path(
+    &self,
+  ) -> impl Future<Output = Self::Result<Cow<'_, Path>>> + Send;
+  fn to_command(&self) -> impl Future<Output = Self::Result<Command>> + Send;
 }
 /// application getter
 pub trait AppGetter: Sized + AppPath
 {
-  async fn get_by_current_user() -> Result<Self, Self::Error>;
-  async fn get_by_all_user() -> Result<Self, Self::Error>;
+  fn get_by_current_user() -> impl Future<Output = Self::Result<Self>> + Send;
+  fn get_by_all_user() -> impl Future<Output = Self::Result<Self>> + Send;
 }
 /// application operators
 pub trait AppOper: Sized + AppInfo
@@ -69,10 +77,12 @@ pub trait AppOper: Sized + AppInfo
   type Reinstaller: crate::process::Process;
   type Remover: crate::process::Process;
   type Updater: crate::process::Process;
-  async fn installer() -> Result<Self::Installer, Self::Error>;
-  async fn reinstaller(self) -> Result<Self::Reinstaller, Self::Error>;
-  async fn remover(self) -> Result<Self::Remover, Self::Error>;
-  async fn updater(self) -> Result<Self::Updater, Self::Error>;
+  fn installer() -> impl Future<Output = Self::Result<Self::Installer>> + Send;
+  fn reinstaller(
+    self,
+  ) -> impl Future<Output = Self::Result<Self::Reinstaller>> + Send;
+  fn remover(self) -> impl Future<Output = Self::Result<Self::Remover>> + Send;
+  fn updater(self) -> impl Future<Output = Self::Result<Self::Updater>> + Send;
 }
 impl Display for AppLicense
 {

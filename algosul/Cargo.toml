@@ -41,7 +41,8 @@ full = [
     "math-color",
     "utils",
     "utils-tokio",
-    "langs"
+    "langs",
+    "unstable"
 ]
 
 app = ["process"]
@@ -68,6 +69,8 @@ utils = ["dep:rfd"]
 utils-tokio = ["utils", "dep:tokio", "dep:bytes"]
 
 langs = []
+
+unstable = []
 
 [package.metadata.docs.rs]
 features = ["full"]

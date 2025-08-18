@@ -73,58 +73,63 @@ pub const EDITION_2024: &str = "2024";
 
 impl AppInfo for Rustc
 {
-  type Error = super::Error;
+  type Result<T> = super::Result<T>;
 
   async fn name(&self) -> Cow<'_, str>
   {
     Cow::Borrowed("rustc")
   }
 
-  async fn license(&self) -> Result<Cow<'_, AppLicense>, Self::Error>
+  async fn license(&self) -> Self::Result<Cow<'_, AppLicense>>
   {
     Ok(Cow::Owned(utils::rust_license()))
   }
 
-  async fn readme(&self) -> Result<String, Self::Error>
+  async fn readme(&self) -> Self::Result<String>
   {
     todo!()
   }
 
-  async fn readme_md(&self) -> Result<String, Self::Error>
+  async fn readme_md(&self) -> Self::Result<String>
   {
     todo!()
   }
 
-  async fn documentation(&self) -> Result<Cow<'_, str>, Self::Error>
+  async fn documentation(&self) -> Self::Result<Cow<'_, str>>
   {
     Ok(Cow::Borrowed("https://doc.rust-lang.org/rustc"))
   }
 
-  async fn homepage(&self) -> Result<Cow<'_, str>, Self::Error>
+  async fn homepage(&self) -> Self::Result<Cow<'_, str>>
   {
     self.repository().await
   }
 
-  async fn repository(&self) -> Result<Cow<'_, str>, Self::Error>
+  async fn repository(&self) -> Self::Result<Cow<'_, str>>
   {
     Ok(Cow::Borrowed("https://github.com/rust-lang/rustc"))
   }
 
-  async fn version(&self) -> Result<Cow<'_, str>, Self::Error>
+  async fn version(&self) -> Self::Result<Cow<'_, str>>
   {
     todo!()
   }
 }
 impl AppPath for Rustc
 {
-  async fn home_path(&self) -> Result<Cow<'_, Path>, Self::Error>
+  async fn home_path(&self) -> Self::Result<Cow<'_, Path>>
   {
     Ok(Cow::Borrowed(self.home_path.as_ref()))
   }
 
-  async fn bin_path(&self) -> Result<Cow<'_, Path>, Self::Error>
+  async fn bin_path(&self) -> Self::Result<Cow<'_, Path>>
   {
     Ok(Cow::Owned(self.home_path.join("rustc")))
+  }
+
+  async fn to_command(&self) -> Self::Result<tokio::process::Command>
+  {
+    Ok(tokio::process::Command::new(self.bin_path().await?.as_ref()))
   }
 }
 impl utils::RustAppExt for Rustc

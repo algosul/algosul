@@ -50,7 +50,8 @@ pub trait ToRustVersion
 {
   fn to_rust_version(&'_ self) -> super::Result<RustVersion<'_>>;
 }
-pub trait RustAppExt: Sized + AppPath<Error = super::Error>
+pub trait RustAppExt:
+  Sized + AppPath<Result<Self> = super::Result<Self>>
 {
   fn new(home_path: Arc<PathBuf>) -> super::Result<Self>;
 }

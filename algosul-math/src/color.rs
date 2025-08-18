@@ -1,19 +1,10 @@
-use std::{
-  cmp::{
-    Ordering,
-    Ordering::{Greater, Less},
-  },
-  ops::Range,
-};
+use std::ops::Range;
 
 use algosul_derive::get;
 use num_traits::{float::FloatCore, Bounded, Euclid, Num, One};
 use thiserror::Error;
 
-use crate::{
-  num::{int, NumInt, NumLerp, NumNormalize, NumPercent, NumsRemap},
-  Remap,
-};
+use crate::num::{NumLerp, NumNormalizeAngle, NumPercent, NumsRemap};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Color<T: Clone>
@@ -91,49 +82,41 @@ pub trait ColorRemap<N>
 }
 /// # Range
 /// `0.0..=1.0`
-pub fn hsv_to_rgb<
-  T: FloatCore
-    + NumNormalize
-    + NumInt<0>
-    + NumInt<1>
-    + NumInt<2>
-    + NumInt<3>
-    + NumInt<4>
-    + NumInt<5>
-    + NumInt<6>,
->(
+pub fn hsv_to_rgb<T: FloatCore + NumNormalizeAngle + From<u8>>(
   [h, s, v]: [T; 3],
 ) -> ColorCastResult<[T; 3]>
 {
-  let h = h.normalize_01(); // h: 0.0..1.0
+  let h = h.normalize_unit(); // h: 0.0..1.0
   let c = v * s;
-  let h_prime = h * int::<T, 6>(); // h: 0.0..6.0
-  let x =
-    c * (int::<T, 1>() - ((h_prime % int::<T, 2>()) - int::<T, 1>()).abs());
+  let h_prime = h * <T as From<u8>>::from(6); // h: 0.0..6.0
+  let x = c
+    * (<T as From<u8>>::from(1)
+      - ((h_prime % <T as From<u8>>::from(2)) - <T as From<u8>>::from(1))
+        .abs());
   let h_prime = h_prime.floor(); // h: 0..6
-  let (r1, g1, b1) = if int::<T, 0>() == h_prime
+  let (r1, g1, b1) = if <T as From<u8>>::from(0) == h_prime
   {
-    (c, x, int::<T, 0>())
+    (c, x, <T as From<u8>>::from(0))
   }
-  else if int::<T, 1>() == h_prime
+  else if <T as From<u8>>::from(1) == h_prime
   {
-    (x, c, int::<T, 0>())
+    (x, c, <T as From<u8>>::from(0))
   }
-  else if int::<T, 2>() == h_prime
+  else if <T as From<u8>>::from(2) == h_prime
   {
-    (int::<T, 0>(), c, x)
+    (<T as From<u8>>::from(0), c, x)
   }
-  else if int::<T, 3>() == h_prime
+  else if <T as From<u8>>::from(3) == h_prime
   {
-    (int::<T, 0>(), x, c)
+    (<T as From<u8>>::from(0), x, c)
   }
-  else if int::<T, 4>() == h_prime
+  else if <T as From<u8>>::from(4) == h_prime
   {
-    (x, int::<T, 0>(), c)
+    (x, <T as From<u8>>::from(0), c)
   }
-  else if int::<T, 5>() == h_prime
+  else if <T as From<u8>>::from(5) == h_prime
   {
-    (c, int::<T, 0>(), x)
+    (c, <T as From<u8>>::from(0), x)
   }
   else
   {
@@ -144,45 +127,41 @@ pub fn hsv_to_rgb<
 }
 /// # Range
 /// `0.0..=1.0`
-pub fn rgb_to_hsv<
-  T: FloatCore
-    + NumInt<0>
-    + NumInt<2>
-    + NumInt<4>
-    + NumInt<6>
-    + NumInt<60>
-    + NumInt<360>
-    + Euclid,
->(
+pub fn rgb_to_hsv<T: FloatCore + NumNormalizeAngle + From<u8> + Euclid>(
   [r, g, b]: [T; 3],
 ) -> ColorCastResult<[T; 3]>
 {
-  use Ordering::*;
   let max = r.max(g).max(b);
   let min = r.min(g).min(b);
   let delta = max - min;
-  let mut h = if delta == int::<T, 0>()
+  let h = if delta == <T as From<u8>>::from(0)
   {
-    int::<T, 0>()
-  }
-  else if max == r
-  {
-    int::<T, 60>() * ((g - b) / delta).rem_euclid(&int::<T, 6>())
-  }
-  else if max == g
-  {
-    int::<T, 60>() * ((b - r) / delta + int::<T, 2>())
+    <T as From<u8>>::from(0)
   }
   else
   {
-    int::<T, 60>() * ((r - g) / delta + int::<T, 4>())
+    let h = if max == r
+    {
+      ((g - b) / delta).rem_euclid(&<T as From<u8>>::from(6))
+    }
+    else if max == g
+    {
+      (b - r) / delta + <T as From<u8>>::from(2)
+    }
+    else
+    {
+      (r - g) / delta + <T as From<u8>>::from(4)
+    };
+    (h / <T as From<u8>>::from(6)).normalize_unit()
   };
-  if h < int::<T, 0>()
+  let s = if max == <T as From<u8>>::from(0)
   {
-    h = h + int::<T, 360>();
-    unimplemented!();
+    <T as From<u8>>::from(0)
   }
-  let s = if max == int::<T, 0>() { int::<T, 0>() } else { delta / max };
+  else
+  {
+    delta / max
+  };
   Ok([h, s, max])
 }
 macro_rules! impl_color {
@@ -312,64 +291,28 @@ impl_color!(
     |ColorHsv::<T>([ref h, ref s, ref v])|
       [h.clone(), s.clone(), v.clone(), T::one()],;
 );
-impl<
-  T: FloatCore
-    + NumInt<0>
-    + NumInt<1>
-    + NumInt<2>
-    + NumInt<3>
-    + NumInt<4>
-    + NumInt<5>
-    + NumInt<6>,
-> ColorHsv<T>
+impl<T: FloatCore + From<u8>> ColorHsv<T>
 {
   pub fn to_rgb(&self) -> ColorCastResult<ColorRgb<T>>
   {
     hsv_to_rgb(self.0).map(ColorRgb)
   }
 }
-impl<
-  T: FloatCore
-    + NumInt<0>
-    + NumInt<1>
-    + NumInt<2>
-    + NumInt<3>
-    + NumInt<4>
-    + NumInt<5>
-    + NumInt<6>,
-> ColorHsva<T>
+impl<T: FloatCore + From<u8>> ColorHsva<T>
 {
   pub fn to_rgba(&self) -> ColorCastResult<ColorRgba<T>>
   {
     hsv_to_rgb(get!(self.hsv)).map(ColorRgb).map(Into::into)
   }
 }
-impl<
-  T: FloatCore
-    + Euclid
-    + NumInt<0>
-    + NumInt<2>
-    + NumInt<4>
-    + NumInt<6>
-    + NumInt<60>
-    + NumInt<360>,
-> ColorRgb<T>
+impl<T: FloatCore + Euclid + From<u8>> ColorRgb<T>
 {
   pub fn to_hsv(&self) -> ColorCastResult<ColorHsv<T>>
   {
     rgb_to_hsv(self.0).map(ColorHsv)
   }
 }
-impl<
-  T: FloatCore
-    + Euclid
-    + NumInt<0>
-    + NumInt<2>
-    + NumInt<4>
-    + NumInt<6>
-    + NumInt<60>
-    + NumInt<360>,
-> ColorRgba<T>
+impl<T: FloatCore + Euclid + From<u8>> ColorRgba<T>
 {
   pub fn to_hsva(&self) -> ColorCastResult<ColorHsva<T>>
   {
@@ -377,16 +320,7 @@ impl<
   }
 }
 
-impl<
-  T: FloatCore
-    + NumInt<0>
-    + NumInt<1>
-    + NumInt<2>
-    + NumInt<3>
-    + NumInt<4>
-    + NumInt<5>
-    + NumInt<6>,
-> TryFrom<ColorHsv<T>> for ColorRgb<T>
+impl<T: FloatCore + From<u8>> TryFrom<ColorHsv<T>> for ColorRgb<T>
 {
   type Error = ColorCastError;
 
@@ -395,16 +329,7 @@ impl<
     value.to_rgb()
   }
 }
-impl<
-  T: FloatCore
-    + NumInt<0>
-    + NumInt<1>
-    + NumInt<2>
-    + NumInt<3>
-    + NumInt<4>
-    + NumInt<5>
-    + NumInt<6>,
-> TryFrom<ColorHsva<T>> for ColorRgba<T>
+impl<T: FloatCore + From<u8>> TryFrom<ColorHsva<T>> for ColorRgba<T>
 {
   type Error = ColorCastError;
 
@@ -413,16 +338,7 @@ impl<
     value.to_rgba()
   }
 }
-impl<
-  T: FloatCore
-    + Euclid
-    + NumInt<0>
-    + NumInt<2>
-    + NumInt<4>
-    + NumInt<6>
-    + NumInt<60>
-    + NumInt<360>,
-> TryFrom<ColorRgba<T>> for ColorHsva<T>
+impl<T: FloatCore + Euclid + From<u8>> TryFrom<ColorRgba<T>> for ColorHsva<T>
 {
   type Error = ColorCastError;
 
@@ -431,16 +347,7 @@ impl<
     value.to_hsva()
   }
 }
-impl<
-  T: FloatCore
-    + Euclid
-    + NumInt<0>
-    + NumInt<2>
-    + NumInt<4>
-    + NumInt<6>
-    + NumInt<60>
-    + NumInt<360>,
-> TryFrom<ColorRgb<T>> for ColorHsv<T>
+impl<T: FloatCore + Euclid + From<u8>> TryFrom<ColorRgb<T>> for ColorHsv<T>
 {
   type Error = ColorCastError;
 

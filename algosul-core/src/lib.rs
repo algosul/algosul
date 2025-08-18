@@ -1,6 +1,3 @@
-#![feature(extend_one)]
-#![feature(impl_trait_in_assoc_type)]
-#![feature(negative_impls)]
 #[cfg(feature = "codegen")]
 pub mod codegen;
 #[cfg(feature = "deps")]
