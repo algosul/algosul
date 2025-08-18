@@ -1,2 +1,4 @@
-use crate::use_all_os;
-use_all_os! {pub, crate::os_impl :os: app::apps::*}
+#[cfg(any(unix, windows))]
+pub mod gcc;
+#[cfg(any(unix, windows))]
+pub mod rust;

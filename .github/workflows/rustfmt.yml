@@ -4,9 +4,6 @@ on:
   pull_request:
     branches: [ release ]
 
-permissions:
-  contents: write
-
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
@@ -21,31 +18,11 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           profile: minimal
           components: rustfmt
 
       - name: Run cargo fmt
         run: |
           # First check if formatting is needed
-          if ! cargo fmt --all -- --check --config-path code-standards/rustfmt.toml; then
-            # Format the code using custom config
-            cargo fmt --all -- --config-path code-standards/rustfmt.toml
-    
-            # Configure git
-            git config user.name "GitHub Actions"
-            git config user.email "actions@github.com"
-    
-            # Add and commit changes
-            git add .
-            if git commit -m "style: apply cargo fmt [skip ci]"; then
-              git push
-              echo "Formatted code and pushed changes."
-            else
-              git status
-              echo "No formatting changes to commit."
-              exit 1
-            fi
-          else
-            echo "Code is already formatted."
-          fi
+          cargo fmt --all -- --check --config-path code-standards/rustfmt.toml

@@ -1,0 +1,58 @@
+name: Multi-Platform Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - release
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        arch: [ x86_64 ]
+    
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install libssl-dev
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Build
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: trace
+        run: |
+          cargo build --verbose
+
+      - name: Run tests
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: trace
+        run: |
+          cargo test --all-features --verbose -- --nocapture
+      - name: Run ignore tests
+        env:
+          RUST_BACKTRACE: 1
+          RUST_LOG: trace
+        run: |
+          cargo test --all-features --verbose -- --ignored --nocapture
+      - name: Upload artifact
+        if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true }}
+        uses: actions/download-artifact@v4
+        with:
+          name: release-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./target/release
+

@@ -1,0 +1,38 @@
+[package]
+name = "algosul-derive"
+version.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+build = "build.rs"
+
+[lib]
+proc-macro = true
+
+[features]
+default = []
+full = ["index"]
+index = []
+
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = []
+
+[dependencies]
+env_logger = "0.11.8"
+proc-macro2 = { version = "1.0.95", features = [] }
+quote = "1.0.40"
+syn = { version = "2.0.104", features = ["full"] }
+log = { version = "0.4.27" }
+
+[dependencies.algosul-core]
+version = "0.0.5"
+path = "../algosul-core"
+default-features = false
+features = ["codegen"]  
+ 
