@@ -13,28 +13,28 @@ I Don't like Python & Java & JS.
 
 <picture>
   <source
-    srcset="https://github-readme-stats-plus-theta.vercel.app/api/top-langs?username=algosul&hide_border=true&layout=compact&theme=dark"
+    srcset="profile/top-langs-dark.svg"
     media="(prefers-color-scheme: dark)"
   />
   <source
-    srcset="https://github-readme-stats-plus-theta.vercel.app/api/top-langs?username=algosul&hide_border=true&layout=compact"
+    srcset="profile/top-langs.svg"
     media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
   />
-  <img src="https://github-readme-stats-plus-theta.vercel.app/api/top-langs?username=algosul&hide_border=true&layout=compact" />
+  <img src="profile/top-langs.svg" />
 </picture>
 
 ## 📈 My GitHub Stats
 
 <picture>
   <source
-    srcset="https://github-readme-stats-plus-theta.vercel.app/api?username=algosul&hide_border=true&show=prs_merged_percentage&include_all_commits=true&custom_title=algosul&count_private=true&show_icons=true&theme=dark"
+    srcset="profile/stats-dark.svg"
     media="(prefers-color-scheme: dark)"
   />
   <source
-    srcset="https://github-readme-stats-plus-theta.vercel.app/api?username=algosul&hide_border=true&show=prs_merged_percentage&include_all_commits=true&custom_title=algosul&count_private=true&show_icons=true&"
+    srcset="profile/stats.svg"
     media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
   />
-  <img src="https://github-readme-stats-plus-theta.vercel.app/api?username=algosul&hide_border=true&show=prs_merged_percentage&include_all_commits=true&custom_title=algosul&count_private=true&show_icons=true&" />
+  <img src="profile/stats.svg" />
 </picture>
 
 ## 💻 Working Environment
