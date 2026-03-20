@@ -2,11 +2,8 @@
 <h1 class="hero-title">
   <span>Hello, I'm algosul.</span>
 </h1>
-<p>Welcome to Algosul blog.</p>
 
 <p>I'm a system programming enthusiasts</p>
-
-<hr />
 
 <h2>🛠️ Stack</h2>
 
@@ -46,8 +43,6 @@
 
 <p>I Don't like Python & Java & JS.</p>
 
-<hr />
-
 <h2>📈 My GitHub Stats</h2>
 
 <picture>
@@ -64,8 +59,6 @@
     alt="GitHub stats"
   />
 </picture>
-
-<hr />
 
 <h2>💻 Working Environment</h2>
 
