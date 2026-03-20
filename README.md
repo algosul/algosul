@@ -1,12 +1,5 @@
 
 <h1 class="hero-title">
-  <img
-    class="site-icon"
-    src="/favicon.png"
-    alt="Algosul Blog logo"
-    width="48"
-    height="48"
-  />
   <span>Hello, I'm algosul.</span>
 </h1>
 <p>Welcome to Algosul blog.</p>
