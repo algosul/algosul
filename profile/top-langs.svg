@@ -130,7 +130,7 @@
           data-testid="lang-progress"
           x="0"
           y="0"
-          width="237.02"
+          width="227.75"
           height="8"
           fill="#dea584"
         />
@@ -138,9 +138,9 @@
         <rect
           mask="url(#rect-mask)"
           data-testid="lang-progress"
-          x="237.02"
+          x="227.75"
           y="0"
-          width="12.81"
+          width="22.09"
           height="8"
           fill="#ff3670"
         />
@@ -148,9 +148,9 @@
         <rect
           mask="url(#rect-mask)"
           data-testid="lang-progress"
-          x="249.83"
+          x="249.84"
           y="0"
-          width="10.17"
+          width="10.16"
           height="8"
           fill="#427819"
         />
@@ -161,21 +161,21 @@
     <g class="stagger" style="animation-delay: 450ms">
       <circle cx="5" cy="6" r="5" fill="#dea584" />
       <text data-testid="lang-name" x="15" y="10" class='lang-name'>
-        Rust 94.81%
+        Rust 91.10%
       </text>
     </g>
   </g><g transform="translate(0, 25)">
     <g class="stagger" style="animation-delay: 600ms">
       <circle cx="5" cy="6" r="5" fill="#ff3670" />
       <text data-testid="lang-name" x="15" y="10" class='lang-name'>
-        Mermaid 5.12%
+        Mermaid 8.84%
       </text>
     </g>
   </g></g><g transform="translate(150, 0)"><g transform="translate(0, 0)">
     <g class="stagger" style="animation-delay: 450ms">
       <circle cx="5" cy="6" r="5" fill="#427819" />
       <text data-testid="lang-name" x="15" y="10" class='lang-name'>
-        Makefile 0.07%
+        Makefile 0.06%
       </text>
     </g>
   </g></g>
