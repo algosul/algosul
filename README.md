@@ -3,7 +3,11 @@
   <span>Hello, I'm algosul.</span>
 </h1>
 
-[That's my blog](https://algosul.us.ci)
+This's my blog
+
++ [Line 1](https://algosul.us.ci)
++ [Line 2](https://algosul.indevs.in)
++ [Line 3](https://algosul.dpdns.org)
 
 <p>I'm a system programming enthusiasts</p>
 
@@ -11,14 +15,17 @@
 
 <picture>
   <source
+    srcset="https://raw.githubusercontent.com/algosul/algosul/main/cards/cards-en-dark/top-langs.svg"
     srcset="https://raw.githubusercontent.com/algosul/algosul/main/profile/top-langs-dark.svg"
     media="(prefers-color-scheme: dark)"
   />
   <source
+    srcset="https://raw.githubusercontent.com/algosul/algosul/main/cards/cards-en-light/top-langs.svg"
     srcset="https://raw.githubusercontent.com/algosul/algosul/main/profile/top-langs.svg"
     media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
   />
   <img
+    src="https://raw.githubusercontent.com/algosul/algosul/main/cards/cards-en-light/top-langs.svg"
     src="https://raw.githubusercontent.com/algosul/algosul/main/profile/top-langs.svg"
     alt="Top languages"
   />
@@ -49,14 +56,17 @@
 
 <picture>
   <source
+    srcset="https://raw.githubusercontent.com/algosul/algosul/main/cards/cards-en-dark/stats.svg"
     srcset="https://raw.githubusercontent.com/algosul/algosul/main/profile/stats-dark.svg"
     media="(prefers-color-scheme: dark)"
   />
   <source
+    srcset="https://raw.githubusercontent.com/algosul/algosul/main/cards/cards-en-light/stats.svg"
     srcset="https://raw.githubusercontent.com/algosul/algosul/main/profile/stats.svg"
     media="(prefers-color-scheme: light), (prefers-color-scheme: no-preference)"
   />
   <img
+    src="https://raw.githubusercontent.com/algosul/algosul/main/cards/cards-en-light/stats.svg"
     src="https://raw.githubusercontent.com/algosul/algosul/main/profile/stats.svg"
     alt="GitHub stats"
   />

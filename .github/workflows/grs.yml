@@ -6,47 +6,74 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  generate:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - theme: default
+            target_theme: light
+            locale: en
+            target_locale: en
+          - theme: dark
+            target_theme: dark
+            locale: en
+            target_locale: en
+          - theme: default
+            target_theme: light
+            locale: cn
+            target_locale: zh
+          - theme: dark
+            target_theme: dark
+            locale: cn
+            target_locale: zh
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create cards directory
+        run: |
+          mkdir cards
 
       - name: Generate stats card
         uses: readme-tools/github-readme-stats-action@v1
         with:
           card: stats
-          options: username=${{ github.repository_owner }}&hide_border=true&show=prs_merged_percentage&include_all_commits=true&custom_title=algosul&count_private=true&show_icons=true
-          path: profile/stats.svg
+          options: username=${{ github.repository_owner }}&locale=${{ matrix.locale }}&theme=${{ matrix.theme }}&hide_border=true&show=prs_merged_percentage&include_all_commits=true&count_private=true&show_icons=true
+          path: cards/stats.svg
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Generate top-langs card
         uses: readme-tools/github-readme-stats-action@v1
         with:
           card: top-langs
-          options: username=${{ github.repository_owner }}&show_icons=true&hide_border=true&layout=compact
-          path: profile/top-langs.svg
+          options: username=${{ github.repository_owner }}&locale=${{ matrix.locale }}&theme=${{ matrix.theme }}&show_icons=true&hide_border=true&layout=compact
+          path: cards/top-langs.svg
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate stats card (DARK)
-        uses: readme-tools/github-readme-stats-action@v1
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          card: stats
-          options: username=${{ github.repository_owner }}&hide_border=true&show=prs_merged_percentage&include_all_commits=true&custom_title=algosul&count_private=true&show_icons=true&theme=dark
-          path: profile/stats-dark.svg
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: cards-${{ matrix.target_locale }}-${{ matrix.target_theme }}
+          path: cards/*.svg
           
-      - name: Generate top-langs card (DARK)
-        uses: readme-tools/github-readme-stats-action@v1
-        with:
-          card: top-langs
-          options: username=${{ github.repository_owner }}&show_icons=true&hide_border=true&layout=compact&theme=dark
-          path: profile/top-langs-dark.svg
-          token: ${{ secrets.GITHUB_TOKEN }}
+  commit-and-push:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Commit cards
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: cards
+
+      - name: Commit and Push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add profile/*.svg
+
+          git add cards/**/*.svg
           git commit -m "[GITHUB ACTIONS] Update README cards" || exit 0
           git push
