@@ -33,7 +33,7 @@ jobs:
 
       - name: Create cards directory
         run: |
-          mkdir cards
+          mkdir -p cards
 
       - name: Generate stats card
         uses: readme-tools/github-readme-stats-action@v1
