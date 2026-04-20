@@ -1,11 +1,5 @@
 
-<h1 class="hero-title">
-  <span>Hello, I'm algosul.</span>
-</h1>
-
-[That's my blog](https://algosul.us.ci)
-
-<p>I'm a system programming enthusiasts</p>
+This's my blog: <https://algosul.us.ci>
 
 <h2>🛠️ Stack</h2>
 
