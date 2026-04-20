@@ -1,4 +1,6 @@
 
+<h2>📚 Blog </h2>
+
 This's my blog: <https://algosul.us.ci>
 
 <h2>🛠️ Stack</h2>
