@@ -9,7 +9,7 @@
         aria-labelledby="descId"
       >
         <title id="titleId">algosul &#30340; GitHub &#32479;&#35745;&#25968;&#25454;, Rank: C+</title>
-        <desc id="descId">获标星数: 0, 累计提交总数  : 160, 发起的 PR 总数: 37, 被合并的 PR 占比: 78.38, 提出的 issue 总数: 4, 贡献的项目数（去年）: 5</desc>
+        <desc id="descId">获标星数: 0, 累计提交总数  : 163, 发起的 PR 总数: 37, 被合并的 PR 占比: 78.38, 提出的 issue 总数: 4, 贡献的项目数（去年）: 5</desc>
         <style>
           .header {
             font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif;
@@ -73,7 +73,7 @@
         stroke-dashoffset: 251.32741228718345;
       }
       to {
-        stroke-dashoffset: 217.61569736069208;
+        stroke-dashoffset: 217.53781859512802;
       }
     }
   
@@ -177,7 +177,7 @@
         x="219.01"
         y="12.5"
         data-testid="commits"
-      >160</text>
+      >163</text>
     </g>
   </g><g transform="translate(0, 50)">
     <g class="stagger" style="animation-delay: 750ms" transform="translate(25, 0)">
